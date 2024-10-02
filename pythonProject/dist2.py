@@ -90,9 +90,9 @@ def calculate_kodi(data):
     return data
 
 #Input és Output fájlok elnevezése
-input_file = 'Adatok.xlsx'
-output_file = 'output_data.xlsx'
-separate_file = 'small_groups_output.xlsx'
+input_file = '/Users/bercelkovalik/Documents./InputOutput/Adatok.xlsx'
+output_file = '/Users/bercelkovalik/Documents./InputOutput/output_data.xlsx'
+separate_file = '/Users/bercelkovalik/Documents./InputOutput/small_groups_output.xlsx'
 
 #Load
 data = load_data(input_file)
