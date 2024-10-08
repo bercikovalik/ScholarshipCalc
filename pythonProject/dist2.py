@@ -1,4 +1,6 @@
 import pandas as pd
+from openpyxl.styles import PatternFill
+
 
 
 def load_data(file_path):
@@ -10,7 +12,8 @@ def group_students(data):
     labels = ['1. éves', '2. éves', '3. éves', '4. éves', '5. éves', '6. éves']
     data['Évfolyam'] = pd.cut(data['Aktív félévek'], bins=bins, labels=labels, right=True)
 
-    grouped = data.groupby(['KépzésKód', 'Évfolyam']).size().reset_index(name='Létszám')
+    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
+    grouped = data.groupby(grouping_columns).size().reset_index(name='Létszám')
     return grouped, data
 
 
@@ -34,26 +37,35 @@ def find_nearest_group(group, i):
 def redistribute_students(grouped, original_data):
     modified_data = original_data.copy()
 
-    for code in grouped['KépzésKód'].unique():
-        group = grouped[grouped['KépzésKód'] == code].copy()
+    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID']
+
+    for keys in grouped[grouping_columns].drop_duplicates().values:
+        key_dict = dict(zip(grouping_columns, keys))
+        group_mask = (grouped['KépzésNév'] == keys[0]) & \
+                     (grouped['Képzési szint'] == keys[1]) & \
+                     (grouped['Nyelv ID'] == keys[2])
+        group = grouped[group_mask].copy().reset_index(drop=True)
 
         total_students = group['Létszám'].sum()
         if total_students < 10:
             continue
 
         for i in range(len(group)):
-            if group.iloc[i]['Létszám'] < 10:
+            if group.iloc[i]['Létszám'] < 10 and group.iloc[i]['Létszám'] > 0:
                 current_year = group.iloc[i]['Évfolyam']
                 original_index = modified_data[
-                    (modified_data['KépzésKód'] == code) & (modified_data['Évfolyam'] == current_year)].index
+                    (modified_data['KépzésNév'] == keys[0]) &
+                    (modified_data['Képzési szint'] == keys[1]) &
+                    (modified_data['Nyelv ID'] == keys[2]) &
+                    (modified_data['Évfolyam'] == current_year)].index
 
                 closest_year_index = find_nearest_group(group, i)
 
                 if closest_year_index is not None:
                     new_year = group.iloc[closest_year_index]['Évfolyam']
                     modified_data.loc[original_index, 'Évfolyam'] = new_year
-                    group.iloc[closest_year_index, group.columns.get_loc('Létszám')] += group.iloc[i]['Létszám']
-                    group.iloc[i, group.columns.get_loc('Létszám')] = 0
+                    group.at[closest_year_index, 'Létszám'] += group.at[i, 'Létszám']
+                    group.at[i, 'Létszám'] = 0
 
     return modified_data
 
@@ -72,13 +84,19 @@ def recalculate_year_for_small_groups(data):
 
 
 def save_to_excel(main_data, separate_data, output_file, separate_file):
-    main_data.to_excel(output_file, index=False)
+    # Save main_data with formatting
+    with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
+        main_data.to_excel(writer, index=False, sheet_name='MainData')
+        apply_alternate_row_coloring(writer, main_data, 'MainData')
+
+    # Save separate_data without formatting
     separate_data.to_excel(separate_file, index=False)
 
 
 def filter_small_groups(data):
-    course_counts = data.groupby('KépzésKód').size().reset_index(name='Total_in_Course')
-    data = data.merge(course_counts, on='KépzésKód')
+    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID']
+    course_counts = data.groupby(grouping_columns).size().reset_index(name='Total_in_Course')
+    data = data.merge(course_counts, on=grouping_columns)
     small_groups = data[data['Total_in_Course'] < 10]
     remaining_data = data[data['Total_in_Course'] >= 10]
     small_groups = small_groups.drop(columns=['Total_in_Course'])
@@ -87,19 +105,66 @@ def filter_small_groups(data):
 
 
 def sort_data(data):
-    data = data.sort_values(by=['KépzésKód', 'Aktív félévek'], ascending=[True, True])
+    data = data.sort_values(by=['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Aktív félévek'], ascending=[True, True, True, True])
     return data
 
 
 def calculate_kodi(data):
-    grouped = data.groupby(['KépzésKód', 'Évfolyam'])
+    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
+    grouped = data.groupby(grouping_columns)
+
+    # Calculate Min and Max Ösztöndíjindex for each group
     data['MinÖDI'] = grouped['Ösztöndíjindex'].transform('min')
     data['MaxÖDI'] = grouped['Ösztöndíjindex'].transform('max')
-    data['KÖDI'] = ((data['Ösztöndíjindex'] - data['MinÖDI']) / (data['MaxÖDI'] - data['MinÖDI'])) * 100
-    data['KÖDI'] = data['KÖDI'].fillna(100)
+
+    # Calculate KÖDI with adjusted formula
+    def calculate_group_kodi(row):
+        if row['MaxÖDI'] == row['MinÖDI']:
+            return 100.0  # All students have the same Ösztöndíjindex
+        else:
+            kodi = ((row['Ösztöndíjindex'] - row['MinÖDI']) / (row['MaxÖDI'] - row['MinÖDI'])) * 100
+            return round(kodi, 6)  # Round to handle floating point precision
+
+    data['KÖDI'] = data.apply(calculate_group_kodi, axis=1)
+
+    # Ensure that the max Ösztöndíjindex gets KÖDI of exactly 100
+    max_odi_mask = data['Ösztöndíjindex'] == data['MaxÖDI']
+    data.loc[max_odi_mask, 'KÖDI'] = 100.0
+
+    # Ensure that the min Ösztöndíjindex gets KÖDI of exactly 0
+    min_odi_mask = data['Ösztöndíjindex'] == data['MinÖDI']
+    data.loc[min_odi_mask, 'KÖDI'] = 0.0
+
     data.drop(columns=['MinÖDI', 'MaxÖDI'], inplace=True)
 
     return data
+
+
+def apply_alternate_row_coloring(writer, df, sheet_name):
+    workbook = writer.book
+    worksheet = writer.sheets[sheet_name]
+    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
+    df['GroupID'] = df[grouping_columns].apply(lambda x: ' | '.join(x.astype(str)), axis=1)
+    last_row = df.shape[0] + 1
+    last_col = df.shape[1]
+
+    fill_colors = ['FFFFFF', 'D3D3D3']
+    current_fill = 0
+    previous_group = None
+
+    for row in range(2, last_row + 1):
+        group_id = df.iloc[row - 2]['GroupID']
+        if group_id != previous_group:
+            current_fill = (current_fill + 1) % len(fill_colors)
+            previous_group = group_id
+
+        fill = PatternFill(start_color=fill_colors[current_fill], end_color=fill_colors[current_fill], fill_type='solid')
+        for col in range(1, last_col + 1):
+            cell = worksheet.cell(row=row, column=col)
+            cell.fill = fill
+
+    df.drop(columns=['GroupID'], inplace=True)
+
 
 
 # Input és Output fájlok elnevezése
@@ -118,12 +183,12 @@ updated_data_with_scholarship = calculate_scholarship_index(updated_data)
 updated_data_with_scholarship_and_kodi = calculate_kodi(updated_data_with_scholarship)
 
 # Rendezés
-updated_data_with_scholarship = sort_data(updated_data_with_scholarship)
+updated_data_with_scholarship_and_kodi = sort_data(updated_data_with_scholarship_and_kodi)
 small_groups_data = recalculate_year_for_small_groups(small_groups_data)
 small_groups_data_with_scholarship = calculate_scholarship_index(small_groups_data)
 small_groups_data_with_scholarship = sort_data(small_groups_data_with_scholarship)
 
 # Mentés
-save_to_excel(updated_data_with_scholarship_and_kodi, small_groups_data, output_file, separate_file)
+save_to_excel(updated_data_with_scholarship_and_kodi, small_groups_data_with_scholarship, output_file, separate_file)
 
 print("Process completed.")
