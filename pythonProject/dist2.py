@@ -1,11 +1,17 @@
 import pandas as pd
 from openpyxl.styles import PatternFill
 
-
-
 def load_data(file_path):
     return pd.read_excel(file_path)
 
+def check_duplicate_neptun_codes(data):
+    duplicated = data[data.duplicated(subset=['Neptun kód'], keep=False)]
+    if not duplicated.empty:
+        print("Warning: There are students with duplicate Neptun kód:")
+        for neptun_code in duplicated['Neptun kód'].unique():
+            print(f"Neptun kód: {neptun_code}")
+    else:
+        print("No duplicate Neptun kód found.")
 
 def group_students(data):
     bins = [0, 2, 4, 6, 8, 10, 12]
@@ -13,9 +19,8 @@ def group_students(data):
     data['Évfolyam'] = pd.cut(data['Aktív félévek'], bins=bins, labels=labels, right=True)
 
     grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
-    grouped = data.groupby(grouping_columns).size().reset_index(name='Létszám')
+    grouped = data.groupby(grouping_columns, observed=True).size().reset_index(name='Létszám')
     return grouped, data
-
 
 def find_nearest_group(group, i):
     prev_idx, next_idx = i - 1, i + 1
@@ -32,7 +37,6 @@ def find_nearest_group(group, i):
         prev_idx -= 1
         next_idx += 1
     return None
-
 
 def redistribute_students(grouped, original_data):
     modified_data = original_data.copy()
@@ -69,12 +73,10 @@ def redistribute_students(grouped, original_data):
 
     return modified_data
 
-
 def calculate_scholarship_index(data):
     data['Kredit szám'] = data['ElőzőFélévTeljesítettKredit'].apply(lambda x: min(x, 42))
     data['Ösztöndíjindex'] = data['Ösztöndíj átlag előző félév'] + ((data['Kredit szám'] / 27) - 1) / 2
     return data
-
 
 def recalculate_year_for_small_groups(data):
     bins = [0, 2, 4, 6, 8, 10, 12]
@@ -82,63 +84,14 @@ def recalculate_year_for_small_groups(data):
     data['Évfolyam'] = pd.cut(data['Aktív félévek'], bins=bins, labels=labels, right=True)
     return data
 
-
 def save_to_excel(main_data, separate_data, output_file, separate_file):
-    # Save main_data with formatting
     with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
         main_data.to_excel(writer, index=False, sheet_name='MainData')
         apply_alternate_row_coloring(writer, main_data, 'MainData')
 
-    # Save separate_data without formatting
-    separate_data.to_excel(separate_file, index=False)
-
-
-def filter_small_groups(data):
-    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID']
-    course_counts = data.groupby(grouping_columns).size().reset_index(name='Total_in_Course')
-    data = data.merge(course_counts, on=grouping_columns)
-    small_groups = data[data['Total_in_Course'] < 10]
-    remaining_data = data[data['Total_in_Course'] >= 10]
-    small_groups = small_groups.drop(columns=['Total_in_Course'])
-    remaining_data = remaining_data.drop(columns=['Total_in_Course'])
-    return remaining_data, small_groups
-
-
-def sort_data(data):
-    data = data.sort_values(by=['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Aktív félévek'], ascending=[True, True, True, True])
-    return data
-
-
-def calculate_kodi(data):
-    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
-    grouped = data.groupby(grouping_columns)
-
-    # Calculate Min and Max Ösztöndíjindex for each group
-    data['MinÖDI'] = grouped['Ösztöndíjindex'].transform('min')
-    data['MaxÖDI'] = grouped['Ösztöndíjindex'].transform('max')
-
-    # Calculate KÖDI with adjusted formula
-    def calculate_group_kodi(row):
-        if row['MaxÖDI'] == row['MinÖDI']:
-            return 100.0  # All students have the same Ösztöndíjindex
-        else:
-            kodi = ((row['Ösztöndíjindex'] - row['MinÖDI']) / (row['MaxÖDI'] - row['MinÖDI'])) * 100
-            return round(kodi, 6)  # Round to handle floating point precision
-
-    data['KÖDI'] = data.apply(calculate_group_kodi, axis=1)
-
-    # Ensure that the max Ösztöndíjindex gets KÖDI of exactly 100
-    max_odi_mask = data['Ösztöndíjindex'] == data['MaxÖDI']
-    data.loc[max_odi_mask, 'KÖDI'] = 100.0
-
-    # Ensure that the min Ösztöndíjindex gets KÖDI of exactly 0
-    min_odi_mask = data['Ösztöndíjindex'] == data['MinÖDI']
-    data.loc[min_odi_mask, 'KÖDI'] = 0.0
-
-    data.drop(columns=['MinÖDI', 'MaxÖDI'], inplace=True)
-
-    return data
-
+    with pd.ExcelWriter(separate_file, engine='openpyxl') as writer:
+        separate_data.to_excel(writer, index=False, sheet_name='SeparateData')
+        apply_alternate_row_coloring(writer, separate_data, 'SeparateData')
 
 def apply_alternate_row_coloring(writer, df, sheet_name):
     workbook = writer.book
@@ -165,30 +118,93 @@ def apply_alternate_row_coloring(writer, df, sheet_name):
 
     df.drop(columns=['GroupID'], inplace=True)
 
+def filter_small_groups(data):
+    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID']
+    course_counts = data.groupby(grouping_columns).size().reset_index(name='Total_in_Course')
+    data = data.merge(course_counts, on=grouping_columns)
+    small_groups = data[data['Total_in_Course'] < 10]
+    remaining_data = data[data['Total_in_Course'] >= 10]
+    small_groups = small_groups.drop(columns=['Total_in_Course'])
+    remaining_data = remaining_data.drop(columns=['Total_in_Course'])
+    return remaining_data, small_groups
 
+def sort_data(data):
+    data = data.sort_values(by=['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam', 'Aktív félévek'], ascending=True)
+    return data
 
-# Input és Output fájlok elnevezése
+def calculate_kodi(data):
+    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
+    grouped = data.groupby(grouping_columns, observed=True)
+
+    data['MinÖDI'] = grouped['Ösztöndíjindex'].transform('min')
+    data['MaxÖDI'] = grouped['Ösztöndíjindex'].transform('max')
+
+    def calculate_group_kodi(row):
+        if row['MaxÖDI'] == row['MinÖDI']:
+            return 100.0
+        else:
+            kodi = ((row['Ösztöndíjindex'] - row['MinÖDI']) / (row['MaxÖDI'] - row['MinÖDI'])) * 100
+            return round(kodi, 6)
+
+    data['KÖDI'] = data.apply(calculate_group_kodi, axis=1)
+
+    max_odi_mask = data['Ösztöndíjindex'] == data['MaxÖDI']
+    data.loc[max_odi_mask, 'KÖDI'] = 100.0
+
+    min_odi_mask = data['Ösztöndíjindex'] == data['MinÖDI']
+    data.loc[min_odi_mask, 'KÖDI'] = 0.0
+
+    data.drop(columns=['MinÖDI', 'MaxÖDI'], inplace=True)
+
+    return data
+
+def remove_lower_kodi_duplicates(data):
+    duplicated = data[data.duplicated(subset=['Neptun kód'], keep=False)]
+    if not duplicated.empty:
+        print("Removing lower KÖDI entries for duplicate Neptun kód:")
+        for neptun_code in duplicated['Neptun kód'].unique():
+            student_rows = data[data['Neptun kód'] == neptun_code]
+            max_kodi_index = student_rows['KÖDI'].idxmax()
+            indices_to_drop = student_rows.index.difference([max_kodi_index])
+            data = data.drop(indices_to_drop)
+            print(f"Neptun kód {neptun_code}: Kept index {max_kodi_index}, dropped indices {list(indices_to_drop)}")
+    else:
+        print("No duplicate Neptun kód found after KÖDI calculation.")
+    return data.reset_index(drop=True)
+
+# Input and Output file paths
 input_file = '/Users/bercelkovalik/Documents./InputOutput/Adatok.xlsx'
 output_file = '/Users/bercelkovalik/Documents./InputOutput/output_data.xlsx'
 separate_file = '/Users/bercelkovalik/Documents./InputOutput/small_groups_output.xlsx'
 
-# Load
+# Load data
 data = load_data(input_file)
 
-# Függvények meghívása
+# Check for duplicate Neptun kód entries before processing
+check_duplicate_neptun_codes(data)
+
+# Initial Function Calls
 remaining_data, small_groups_data = filter_small_groups(data)
 grouped_data, original_data = group_students(remaining_data)
 updated_data = redistribute_students(grouped_data, original_data)
-updated_data_with_scholarship = calculate_scholarship_index(updated_data)
-updated_data_with_scholarship_and_kodi = calculate_kodi(updated_data_with_scholarship)
+updated_data = calculate_scholarship_index(updated_data)
+updated_data = calculate_kodi(updated_data)
 
-# Rendezés
-updated_data_with_scholarship_and_kodi = sort_data(updated_data_with_scholarship_and_kodi)
-small_groups_data = recalculate_year_for_small_groups(small_groups_data)
-small_groups_data_with_scholarship = calculate_scholarship_index(small_groups_data)
-small_groups_data_with_scholarship = sort_data(small_groups_data_with_scholarship)
+updated_data = remove_lower_kodi_duplicates(updated_data)
 
-# Mentés
-save_to_excel(updated_data_with_scholarship_and_kodi, small_groups_data_with_scholarship, output_file, separate_file)
+# Re-run the grouping and redistribution after removing duplicates
+# **This step addresses the group size changes due to eliminations**
+remaining_data, small_groups_data = filter_small_groups(updated_data)
+grouped_data, original_data = group_students(remaining_data)
+updated_data = redistribute_students(grouped_data, original_data)
+updated_data = calculate_scholarship_index(updated_data)
+updated_data = calculate_kodi(updated_data)
+
+# Sorting
+updated_data = sort_data(updated_data)
+small_groups_data = sort_data(small_groups_data)
+
+# Save to Excel
+save_to_excel(updated_data, small_groups_data, output_file, separate_file)
 
 print("Process completed.")
