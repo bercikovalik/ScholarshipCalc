@@ -97,7 +97,8 @@ def apply_alternate_row_coloring(writer, df, sheet_name):
     workbook = writer.book
     worksheet = writer.sheets[sheet_name]
     grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
-    df['GroupID'] = df[grouping_columns].apply(lambda x: ' | '.join(x.astype(str)), axis=1)
+    # Use a temporary GroupID for coloring
+    df['TempGroupID'] = df[grouping_columns].apply(lambda x: ' | '.join(x.astype(str)), axis=1)
     last_row = df.shape[0] + 1
     last_col = df.shape[1]
 
@@ -106,7 +107,7 @@ def apply_alternate_row_coloring(writer, df, sheet_name):
     previous_group = None
 
     for row in range(2, last_row + 1):
-        group_id = df.iloc[row - 2]['GroupID']
+        group_id = df.iloc[row - 2]['TempGroupID']
         if group_id != previous_group:
             current_fill = (current_fill + 1) % len(fill_colors)
             previous_group = group_id
@@ -116,7 +117,23 @@ def apply_alternate_row_coloring(writer, df, sheet_name):
             cell = worksheet.cell(row=row, column=col)
             cell.fill = fill
 
-    df.drop(columns=['GroupID'], inplace=True)
+    # Remove the temporary column
+    df.drop(columns=['TempGroupID'], inplace=True)
+
+def add_group_index(data):
+    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
+    data['GroupID'] = data[grouping_columns].apply(lambda x: ' | '.join(x.astype(str)), axis=1)
+    # Assign GroupIndex by detecting changes in GroupID
+    data['GroupIndex'] = (data['GroupID'] != data['GroupID'].shift()).cumsum()
+    # Remove GroupID column if not needed
+    data.drop(columns=['GroupID'], inplace=True)
+    # Move GroupIndex to be the first column
+    cols = data.columns.tolist()
+    cols.insert(0, cols.pop(cols.index('GroupIndex')))
+    data = data[cols]
+    return data
+
+
 
 def filter_small_groups(data):
     grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID']
@@ -189,11 +206,12 @@ grouped_data, original_data = group_students(remaining_data)
 updated_data = redistribute_students(grouped_data, original_data)
 updated_data = calculate_scholarship_index(updated_data)
 updated_data = calculate_kodi(updated_data)
+# Remove the add_group_index call here
+# updated_data = add_group_index(updated_data)
 
 updated_data = remove_lower_kodi_duplicates(updated_data)
 
 # Re-run the grouping and redistribution after removing duplicates
-# **This step addresses the group size changes due to eliminations**
 remaining_data, small_groups_data = filter_small_groups(updated_data)
 grouped_data, original_data = group_students(remaining_data)
 updated_data = redistribute_students(grouped_data, original_data)
@@ -204,7 +222,12 @@ updated_data = calculate_kodi(updated_data)
 updated_data = sort_data(updated_data)
 small_groups_data = sort_data(small_groups_data)
 
+# Add GroupIndex after sorting
+updated_data = add_group_index(updated_data)
+small_groups_data = add_group_index(small_groups_data)
+
 # Save to Excel
 save_to_excel(updated_data, small_groups_data, output_file, separate_file)
 
 print("Process completed.")
+
