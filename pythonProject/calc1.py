@@ -4,82 +4,92 @@ import numpy as np
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
 
-
 @st.cache_data
 def load_data(file_path):
-    return pd.read_excel(file_path)
+    data = pd.read_excel(file_path)
+    return data
 
+def get_group_percentages(groups):
+    st.sidebar.header("Group Percentages")
+    group_percentages = {}
+    total_percentage = 0
+    with st.sidebar.expander("Set Group Percentages"):
+        for group in groups:
+            # Assign a default percentage, e.g., 30%
+            default_percentage = 35
+            percentage = st.number_input(f"Group {group} Percentage (%)", min_value=0, max_value=100,
+                                         value=default_percentage, step=1, key=f"group_{group}")
+            group_percentages[group] = percentage / 100  # Convert to decimal
+            total_percentage += percentage
+    return group_percentages
 
-def get_user_inputs():
-    st.sidebar.header("Adjustable Parameters")
-    total_fund = st.sidebar.number_input("Total Scholarship Fund", value=100000, step=1000)
-    group_percentage = st.sidebar.slider("Group Percentage (%)", min_value=1, max_value=100, value=30)
-    max_amount_per_group = st.sidebar.number_input("Maximum Scholarship Amount per Student", value=2000, step=100)
-    min_amount_per_group = st.sidebar.number_input("Minimum Scholarship Amount per Student", value=500, step=100)
-    return total_fund, group_percentage / 100, max_amount_per_group, min_amount_per_group
+def calculate_scholarship_amounts_global(data, gamma, max_amount_per_group, min_amount_per_group, group_percentages):
+    recipients_list = []
+    total_students = len(data)
+    total_recipients = 0
 
-
-def calculate_scholarship_amounts(data, gamma, max_amount_per_group, min_amount_per_group, group_percentage):
-    scholarship_amounts = []
-    groups = data['GroupID'].unique()
-
-    for group in groups:
-        group_data = data[data['GroupID'] == group].copy()
-        total_students = len(group_data)
-        num_recipients = int(np.ceil(group_percentage * total_students))
+    for group in data['GroupIndex'].unique():
+        group_data = data[data['GroupIndex'] == group].copy()
+        num_students_in_group = len(group_data)
+        group_percentage = group_percentages.get(group, 0.3)  # Default to 30% if not specified
+        num_recipients = int(np.ceil(group_percentage * num_students_in_group))
 
         # Sort students by KÖDI in descending order
         group_data = group_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
 
-        # Select top students based on num_recipients
+        # Select top students
         recipients = group_data.iloc[:num_recipients].copy()
+        total_recipients += num_recipients
 
-        # KÖDI cutoff (minimum KÖDI among recipients)
-        KODI_cutoff = recipients['KÖDI'].min()
-
-        # Handle case where KÖDI_cutoff == 100
-        if KODI_cutoff == 100:
-            KODI_cutoff = 99.999  # Slightly less than 100 to avoid division by zero
-
-        # Normalize KÖDI scores to range between 0 and 1
-        KODI_normalized = (recipients['KÖDI'] - KODI_cutoff) / (100 - KODI_cutoff)
-
-        # Apply the exponential function
-        f_K = KODI_normalized ** gamma
-
-        # Calculate scholarship amounts
-        recipients['Scholarship Amount'] = min_amount_per_group + f_K * (max_amount_per_group - min_amount_per_group)
-
-        scholarship_amounts.append(recipients)
+        recipients_list.append(recipients)
 
     # Combine all recipients
-    all_recipients = pd.concat(scholarship_amounts, ignore_index=True)
-    return all_recipients
+    all_recipients = pd.concat(recipients_list, ignore_index=True)
 
+    # Global KÖDI Cutoff (minimum KÖDI among all recipients)
+    KODI_cutoff_global = all_recipients['KÖDI'].min()
+
+    # Handle case where KODI_cutoff_global == 100
+    if KODI_cutoff_global == 100:
+        KODI_cutoff_global = 99.999
+
+    epsilon = 0.01  # Small positive value
+    KODI_normalized = (all_recipients['KÖDI'] - KODI_cutoff_global) / (100 - KODI_cutoff_global + epsilon)
+
+    # Apply the exponential function
+    f_K = KODI_normalized ** gamma
+
+    # Calculate scholarship amounts
+    all_recipients['Scholarship Amount'] = min_amount_per_group + f_K * (max_amount_per_group - min_amount_per_group)
+
+    # Round scholarship amounts
+    all_recipients['Scholarship Amount'] = all_recipients['Scholarship Amount'].round(2)
+
+    # Reorder columns to place 'Scholarship Amount' first
+    cols = all_recipients.columns.tolist()
+    cols.insert(0, cols.pop(cols.index('Scholarship Amount')))
+    all_recipients = all_recipients[cols]
+
+    return all_recipients, total_recipients, total_students
 
 def calculate_total_allocated_funds(recipients):
     total_allocated = recipients['Scholarship Amount'].sum()
     return total_allocated
 
-
-def objective_function(gamma, data, max_amount_per_group, min_amount_per_group, group_percentage, total_fund):
-    recipients = calculate_scholarship_amounts(data, gamma, max_amount_per_group, min_amount_per_group,
-                                               group_percentage)
+def objective_function_global(gamma, data, max_amount_per_group, min_amount_per_group, group_percentages, total_fund):
+    recipients, _, _ = calculate_scholarship_amounts_global(data, gamma, max_amount_per_group, min_amount_per_group, group_percentages)
     total_allocated = calculate_total_allocated_funds(recipients)
-    # Objective is the absolute difference between total_fund and total_allocated
     return abs(total_fund - total_allocated)
 
-
-def optimize_gamma(data, max_amount_per_group, min_amount_per_group, group_percentage, total_fund):
+def optimize_gamma_global(data, max_amount_per_group, min_amount_per_group, group_percentages, total_fund):
     result = minimize_scalar(
-        objective_function,
-        bounds=(0.1, 5),
-        args=(data, max_amount_per_group, min_amount_per_group, group_percentage, total_fund),
+        objective_function_global,
+        bounds=(0.1, 2),
+        args=(data, max_amount_per_group, min_amount_per_group, group_percentages, total_fund),
         method='bounded'
     )
     optimized_gamma = result.x
     return optimized_gamma
-
 
 def visualize_distribution(recipients):
     plt.figure(figsize=(10, 6))
@@ -90,7 +100,6 @@ def visualize_distribution(recipients):
     plt.grid(True)
     st.pyplot(plt)
 
-
 def main():
     st.title("Scholarship Distribution Calculator")
 
@@ -99,25 +108,43 @@ def main():
     data = load_data(input_file)
 
     # Ensure that the necessary columns are present
-    required_columns = ['KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név', 'Képzési szint', 'Nyelv ID', 'Évfolyam', 'KÖDI']
+    required_columns = ['GroupIndex', 'KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név',
+                        'Képzési szint', 'Nyelv ID', 'Évfolyam', 'KÖDI']
     for col in required_columns:
         if col not in data.columns:
             st.error(f"Error: Column '{col}' not found in data.")
             return
 
-    # Create a GroupID column to uniquely identify groups
-    data['GroupID'] = data[['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']].apply(
-        lambda x: ' | '.join(x.astype(str)), axis=1)
+    # Convert GroupIndex to integer if necessary
+    data['GroupIndex'] = data['GroupIndex'].astype(int)
+
+    # Get list of groups
+    groups = sorted(data['GroupIndex'].unique())
 
     # Get user inputs
-    total_fund, group_percentage, max_amount_per_group, min_amount_per_group = get_user_inputs()
+    total_fund = st.sidebar.number_input("Total Scholarship Fund", value=100000000, step=1000)
+    max_amount_per_group = st.sidebar.number_input("Maximum Scholarship Amount per Student", value=100000, step=100)
+    min_amount_per_group = st.sidebar.number_input("Minimum Scholarship Amount per Student", value=30000, step=100)
+
+    # Get group percentages
+    group_percentages = get_group_percentages(groups)
+
+    # Calculate total percentage of students receiving scholarships
+    total_students = len(data)
+    total_recipients_estimated = 0
+    for group in groups:
+        num_students_in_group = len(data[data['GroupIndex'] == group])
+        group_percentage = group_percentages.get(group, 0.25)  # Default to 30% if not specified
+        num_recipients = int(np.ceil(group_percentage * num_students_in_group))
+        total_recipients_estimated += num_recipients
+    total_percentage_students = (total_recipients_estimated / total_students) * 100
 
     # Optimize gamma
-    optimized_gamma = optimize_gamma(data, max_amount_per_group, min_amount_per_group, group_percentage, total_fund)
+    optimized_gamma = optimize_gamma_global(data, max_amount_per_group, min_amount_per_group, group_percentages, total_fund)
 
-    # Recalculate scholarship amounts with optimized gamma
-    recipients = calculate_scholarship_amounts(data, optimized_gamma, max_amount_per_group, min_amount_per_group,
-                                               group_percentage)
+    # Calculate scholarship amounts using global functions
+    recipients, total_recipients, total_students = calculate_scholarship_amounts_global(
+        data, optimized_gamma, max_amount_per_group, min_amount_per_group, group_percentages)
 
     # Calculate total allocated funds
     total_allocated = calculate_total_allocated_funds(recipients)
@@ -126,15 +153,23 @@ def main():
     st.header("Results")
     st.write(f"**Optimized Gamma:** {optimized_gamma:.4f}")
     st.write(f"**Total Allocated Funds:** {total_allocated:.2f}")
-
-    # Show recipients
-    st.subheader("Scholarship Recipients")
-    st.dataframe(recipients[['KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név', 'Képzési szint', 'Nyelv ID', 'Évfolyam', 'KÖDI']])
+    st.write(f"**Total Percentage of Students Receiving Scholarships:** {total_percentage_students:.2f}%")
 
     # Visualize the distribution
     st.subheader("KÖDI vs. Scholarship Amount")
     visualize_distribution(recipients)
 
+    # Display recipients grouped by GroupIndex
+    st.subheader("Scholarship Recipients by Group")
+    for group in groups:
+        group_recipients = recipients[recipients['GroupIndex'] == group]
+        if not group_recipients.empty:
+            st.markdown(f"### Group {group}")
+            st.dataframe(group_recipients[['GroupIndex', 'KépzésKód', 'KépzésNév',
+                                           'Neptun kód', 'Nyomtatási név', 'Képzési szint',
+                                           'Nyelv ID', 'Évfolyam', 'KÖDI', 'Scholarship Amount']])
+
 
 if __name__ == "__main__":
     main()
+
