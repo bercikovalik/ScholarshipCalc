@@ -198,7 +198,6 @@ def main():
     st.write(f"**Optimized Gamma:** {optimized_gamma:.4f}")
 
     formatted_total_allocated = format_number_with_spaces(total_allocated)
-    formatted_total_fund = format_number_with_spaces(total_fund)
     difference = total_allocated - total_fund
     formatted_difference = format_number_with_spaces(abs(difference))
 
