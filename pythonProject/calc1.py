@@ -9,19 +9,40 @@ def load_data(file_path):
     data = pd.read_excel(file_path)
     return data
 
+
 def get_group_percentages(groups):
     st.sidebar.header("Group Percentages")
-    group_percentages = {}
-    total_percentage = 0
-    with st.sidebar.expander("Set Group Percentages"):
+    group_percentages = st.session_state.group_percentages
+
+    with st.sidebar.expander("Set Group Percentages", expanded=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Add 5% to All"):
+                for group in groups:
+                    new_value = min(group_percentages[group] + 5, 100)
+                    group_percentages[group] = new_value
+                st.rerun()
+        with col2:
+            if st.button("Subtract 5% from All"):
+                for group in groups:
+                    new_value = max(group_percentages[group] - 5, 0)
+                    group_percentages[group] = new_value
+                st.rerun()
+
         for group in groups:
-            # Assign a default percentage, e.g., 30%
-            default_percentage = 35
-            percentage = st.number_input(f"Group {group} Percentage (%)", min_value=0, max_value=100,
-                                         value=default_percentage, step=1, key=f"group_{group}")
-            group_percentages[group] = percentage / 100  # Convert to decimal
-            total_percentage += percentage
-    return group_percentages
+            percentage = st.number_input(
+                f"Group {group} Percentage (%)",
+                min_value=0,
+                max_value=100,
+                value=group_percentages[group],
+                step=1,
+                key=f"group_{group}"
+            )
+            group_percentages[group] = percentage
+
+    group_percentages_decimal = {group: pct / 100 for group, pct in group_percentages.items()}
+    return group_percentages_decimal
+
 
 def calculate_scholarship_amounts_global(data, gamma, max_amount_per_group, min_amount_per_group, group_percentages):
     recipients_list = []
@@ -31,48 +52,37 @@ def calculate_scholarship_amounts_global(data, gamma, max_amount_per_group, min_
     for group in data['GroupIndex'].unique():
         group_data = data[data['GroupIndex'] == group].copy()
         num_students_in_group = len(group_data)
-        group_percentage = group_percentages.get(group, 0.3)  # Default to 30% if not specified
+        group_percentage = group_percentages.get(group, 0.3)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group))
 
-        # Sort students by KÖDI in descending order
         group_data = group_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
 
-        # Select top students
         recipients = group_data.iloc[:num_recipients].copy()
         total_recipients += num_recipients
 
         recipients_list.append(recipients)
 
-    # Combine all recipients
     all_recipients = pd.concat(recipients_list, ignore_index=True)
 
-    # Global KÖDI Cutoff (minimum KÖDI among all recipients)
     KODI_cutoff_global = all_recipients['KÖDI'].min()
 
-    # Handle case where KODI_cutoff_global == 100
     if KODI_cutoff_global == 100:
         KODI_cutoff_global = 99.999
 
-    epsilon = 0.01  # Small positive value
+    epsilon = 0.01
     KODI_normalized = (all_recipients['KÖDI'] - KODI_cutoff_global) / (100 - KODI_cutoff_global + epsilon)
 
-    # Ensure KODI_normalized is between 0 and 1
     KODI_normalized = np.clip(KODI_normalized, 0, 1)
 
-    # Parameters for logistic function
-    k = 10  # Adjust as needed
-    x0 = 0.5  # Midpoint
+    k = 10
+    x0 = 0.5
 
-    # Apply logistic function
     f_K = 1 / (1 + np.exp(-k * (KODI_normalized - x0)))
 
-    # Calculate scholarship amounts
     all_recipients['Scholarship Amount'] = min_amount_per_group + f_K * (max_amount_per_group - min_amount_per_group)
 
-    # Round scholarship amounts
     all_recipients['Scholarship Amount'] = all_recipients['Scholarship Amount'].round(2)
 
-    # Reorder columns to place 'Scholarship Amount' first
     cols = all_recipients.columns.tolist()
     cols.insert(0, cols.pop(cols.index('Scholarship Amount')))
     all_recipients = all_recipients[cols]
@@ -107,80 +117,107 @@ def visualize_distribution(recipients):
     plt.grid(True)
     st.pyplot(plt)
 
+def export_data_to_excel(recipients, required_columns):
+    export_columns = required_columns + ['Scholarship Amount']
+
+    recipients = recipients[export_columns]
+
+    from io import BytesIO
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    recipients.to_excel(writer, index=False, sheet_name='Scholarship Recipients')
+    writer.close()
+    processed_data = output.getvalue()
+
+    st.download_button(label='Download Excel File', data=processed_data,
+                       file_name='Scholarship_Recipients.xlsx',
+                       mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+def format_number_with_spaces(n):
+    s = f"{n:,.2f}"
+    s = s.replace(',', ' ')
+    return s
+
 
 def main():
     st.title("Scholarship Distribution Calculator")
 
-    # Load data
     input_file = '/Users/bercelkovalik/Documents./InputOutput/output_data.xlsx'
     data = load_data(input_file)
 
-    # Ensure that the necessary columns are present
     required_columns = ['GroupIndex', 'KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név',
-                        'Képzési szint', 'Nyelv ID', 'Évfolyam', 'KÖDI']
+                        'Felvétel féléve', 'Aktív félévek', 'Státusz2 jelen félév',
+                        'Ösztöndíj átlag előző félév', 'Képzési szint', 'Nyelv ID', 'Tagozat',
+                        'ElőzőFélévTeljesítettKredit', 'Hallgató kérvény azonosító', 'Évfolyam',
+                        'Kredit szám', 'Ösztöndíjindex', 'KÖDI']
     for col in required_columns:
         if col not in data.columns:
             st.error(f"Error: Column '{col}' not found in data.")
             return
 
-    # Convert GroupIndex to integer if necessary
     data['GroupIndex'] = data['GroupIndex'].astype(int)
 
-    # Get list of groups
     groups = sorted(data['GroupIndex'].unique())
 
-    # Get user inputs
+    if 'group_percentages' not in st.session_state:
+        st.session_state.group_percentages = {group: 30 for group in groups}
+
     total_fund = st.sidebar.number_input("Total Scholarship Fund", value=100000000, step=1000)
+    formatted_total_fund = format_number_with_spaces(total_fund)
+    st.sidebar.write(f"Formatted Total Fund: {formatted_total_fund}")
     max_amount_per_group = st.sidebar.number_input("Maximum Scholarship Amount per Student", value=100000, step=100)
     min_amount_per_group = st.sidebar.number_input("Minimum Scholarship Amount per Student", value=30000, step=100)
 
-    # Get group percentages
     group_percentages = get_group_percentages(groups)
 
-    # Calculate total percentage of students receiving scholarships
     total_students = len(data)
     total_recipients_estimated = 0
     for group in groups:
         num_students_in_group = len(data[data['GroupIndex'] == group])
-        group_percentage = group_percentages.get(group, 0.3)  # Default to 30% if not specified
+        group_percentage = group_percentages.get(group, 0.3)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group))
         total_recipients_estimated += num_recipients
     total_percentage_students = (total_recipients_estimated / total_students) * 100
 
-    # Optimize gamma
     optimized_gamma = optimize_gamma_global(data, max_amount_per_group, min_amount_per_group, group_percentages,
                                             total_fund)
 
-    # Calculate scholarship amounts using global functions
     recipients, total_recipients, total_students = calculate_scholarship_amounts_global(
         data, optimized_gamma, max_amount_per_group, min_amount_per_group, group_percentages)
 
-    # Calculate total allocated funds
     total_allocated = calculate_total_allocated_funds(recipients)
 
-    # Display results
+    st.subheader("Corvinus HÖK")
+    st.write("Here you can calculate the scholarship amount. The graph is a Sigmoid function, it serves as the "
+             "optimal distribution tool. Change the group percentages and min max values to meet the total allocated"
+             " fund amount. Under that, you can see the percentage of students with scholarship,"
+             " compared to total number of students (>23 credits, >3,8 average).")
     st.header("Results")
+    if st.button("Export All Groups to Excel"):
+        export_data_to_excel(recipients, required_columns)
     st.write(f"**Optimized Gamma:** {optimized_gamma:.4f}")
+
+    formatted_total_allocated = format_number_with_spaces(total_allocated)
+    formatted_total_fund = format_number_with_spaces(total_fund)
     difference = total_allocated - total_fund
-    if difference <= 0:
+    formatted_difference = format_number_with_spaces(abs(difference))
+
+    if total_allocated <= total_fund:
         st.markdown(
-            f"<span style='color: green;'>**Total Allocated Funds:** {total_allocated:.2f} (Under by {abs(difference):.2f})</span>",
-            unsafe_allow_html=True)
+            f"<span style='color: green;'>**Total Allocated Funds:** {formatted_total_allocated} (Under by {formatted_difference})</span>",
+            unsafe_allow_html=True
+        )
     else:
         st.markdown(
-            f"<span style='color: red;'>**Total Allocated Funds:** {total_allocated:.2f} (Over by {difference:.2f})</span>",
-            unsafe_allow_html=True)
+            f"<span style='color: red;'>**Total Allocated Funds:** {formatted_total_allocated} (Over by {formatted_difference})</span>",
+            unsafe_allow_html=True
+        )
 
     st.write(f"**Total Percentage of Students Receiving Scholarships:** {total_percentage_students:.2f}%")
-
-    # Visualize the distribution
     st.subheader("KÖDI vs. Scholarship Amount")
     visualize_distribution(recipients)
-
-    # Display recipients grouped by GroupIndex
     st.subheader("Scholarship Recipients by Group")
     for group in groups:
-        # Get the original number of students in the group
         num_students_in_group = len(data[data['GroupIndex'] == group])
 
         group_recipients = recipients[recipients['GroupIndex'] == group]
@@ -188,12 +225,9 @@ def main():
         if not group_recipients.empty:
             st.markdown(
                 f"### Group {group} (Total Students: {num_students_in_group}, Recipients: {num_recipients_in_group})")
-            st.dataframe(group_recipients[['GroupIndex', 'Scholarship Amount', 'KépzésKód', 'KépzésNév',
+            st.dataframe(group_recipients[['GroupIndex', 'KépzésKód', 'KépzésNév',
                                            'Neptun kód', 'Nyomtatási név', 'Képzési szint',
-                                           'Nyelv ID', 'Évfolyam', 'KÖDI']])
-
-
-
+                                           'Nyelv ID', 'Évfolyam', 'KÖDI', 'Scholarship Amount']])
 
 if __name__ == "__main__":
     main()
