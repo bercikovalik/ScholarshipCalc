@@ -133,8 +133,6 @@ def add_group_index(data):
     data = data[cols]
     return data
 
-
-
 def filter_small_groups(data):
     grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID']
     course_counts = data.groupby(grouping_columns).size().reset_index(name='Total_in_Course')
