@@ -13,7 +13,7 @@ Year groups with fewer than 10 students are redistributed to the closest adjacen
 ## Key Features
 -__Dynamic Grouping and Redistribution:__ Automatically identifies small groups and redistributes students into adjacent groups while ensuring no loss of student data.
 
--__Distribution of Allocated Amount:__ Includes a function that distributes the given scholarship fund among students based on their calculated scores (KÖDI). This ensures a fair distribution aligned with the adjusted scholarship index.
+-__Distribution of Allocated Amount:__ Includes an adjustable Sigmoid function that distributes the given scholarship fund among students based on their calculated scores (KÖDI). This ensures a fair distribution aligned with the adjusted scholarship index.
 
 -__Interactive Streamlit GUI:__ A user-friendly interface built with Streamlit allows users to visualize data through graphs, review the grouped students, and adjust parameters such as distribution amounts and group thresholds. This provides a flexible way to fine-tune the scholarship calculation and see real-time results.
 
@@ -21,7 +21,7 @@ Year groups with fewer than 10 students are redistributed to the closest adjacen
 
 The formula used is:
 
-KÖDI = ((HallgÖDI - MinÖDI) / (MaxÖDI - MinÖDI)) x 100
+_ _KÖDI = ((HallgÖDI - MinÖDI) / (MaxÖDI - MinÖDI)) x 100_ _
 
 Where:
 
