@@ -97,7 +97,6 @@ def apply_alternate_row_coloring(writer, df, sheet_name):
     workbook = writer.book
     worksheet = writer.sheets[sheet_name]
     grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
-    # Use a temporary GroupID for coloring
     df['TempGroupID'] = df[grouping_columns].apply(lambda x: ' | '.join(x.astype(str)), axis=1)
     last_row = df.shape[0] + 1
     last_col = df.shape[1]
@@ -123,11 +122,8 @@ def apply_alternate_row_coloring(writer, df, sheet_name):
 def add_group_index(data):
     grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
     data['GroupID'] = data[grouping_columns].apply(lambda x: ' | '.join(x.astype(str)), axis=1)
-    # Assign GroupIndex by detecting changes in GroupID
     data['GroupIndex'] = (data['GroupID'] != data['GroupID'].shift()).cumsum()
-    # Remove GroupID column if not needed
     data.drop(columns=['GroupID'], inplace=True)
-    # Move GroupIndex to be the first column
     cols = data.columns.tolist()
     cols.insert(0, cols.pop(cols.index('GroupIndex')))
     data = data[cols]

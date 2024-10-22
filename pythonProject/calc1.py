@@ -9,7 +9,6 @@ def load_data(file_path):
     data = pd.read_excel(file_path)
     return data
 
-
 def get_group_percentages(groups):
     st.sidebar.header("Group Percentages")
     group_percentages = st.session_state.group_percentages
@@ -73,7 +72,6 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
         all_recipients = pd.concat(recipients_list, ignore_index=True)
         all_recipients.drop_duplicates(inplace=True)
 
-
     KODI_cutoff_global = all_recipients['KÖDI'].min()
 
     epsilon = 0.01
@@ -104,9 +102,6 @@ def objective_function_global(gamma, data, max_amount_per_group, min_amount_per_
     )
     total_allocated = calculate_total_allocated_funds(recipients)
     return abs(total_fund - total_allocated)
-
-
-
 
 def visualize_distribution(recipients):
     plt.figure(figsize=(10, 6))
