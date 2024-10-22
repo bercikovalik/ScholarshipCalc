@@ -1,6 +1,9 @@
 # Corvinus University scholarship calculation tool
 This project was developed in response to recent changes in the Regulation on Student Fees and Benefits at my university, requiring a new approach to scholarship calculations. The task was to create a tool that automates the calculation of scholarship scores for students, addressing both complex grouping and redistribution logic while maintaining transparency and accuracy in the process.
 
+![Screenshot of the working application as preview.]
+(Preview.png)
+
 ## Project Overview
 The tool processes student data from an input Excel file containing 7000+ records to calculate a scholarship index (Ösztöndíjindex) based on their academic performance and credits. Students are grouped according to their program name ('KépzésNév'), level of study ('Képzési szint'), and language ('Nyelv ID'—either 'angol' or 'magyar'). They are further classified into year levels based on their active semesters: 
 - 1-2 semesters: 1st year
