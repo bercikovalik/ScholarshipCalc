@@ -21,7 +21,7 @@ Year groups with fewer than 10 students are redistributed to the closest adjacen
 
 The formula used is:
 
-_ _KÖDI = ((HallgÖDI - MinÖDI) / (MaxÖDI - MinÖDI)) x 100_ _
+ _KÖDI = ((HallgÖDI - MinÖDI) / (MaxÖDI - MinÖDI)) x 100_ 
 
 Where:
 
