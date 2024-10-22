@@ -44,6 +44,7 @@ def get_group_percentages(groups):
 
 
 def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_per_group, group_percentages):
+    global all_recipients
     recipients_list = []
     total_students = len(data)
     total_recipients = 0
@@ -140,19 +141,29 @@ def main():
     input_file = '/Users/bercelkovalik/Documents./InputOutput/output_data.xlsx'
     data = load_data(input_file)
 
+    display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév',
+                                           'KÖDI', 'Scholarship Amount',]
+
     required_columns = ['GroupIndex', 'KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név',
                         'Felvétel féléve', 'Aktív félévek', 'Státusz2 jelen félév',
                         'Ösztöndíj átlag előző félév', 'Képzési szint', 'Nyelv ID', 'Tagozat',
                         'ElőzőFélévTeljesítettKredit', 'Hallgató kérvény azonosító', 'Évfolyam',
                         'Kredit szám', 'Ösztöndíjindex', 'KÖDI']
+
+    export_columns = required_columns + ['Scholarship Amount']
+
     for col in required_columns:
         if col not in data.columns:
             st.error(f"Error: Column '{col}' not found in data.")
             return
 
+    submitted_data = data[
+        data['Hallgató kérvény azonosító'].notnull() & (data['Hallgató kérvény azonosító'] != '')].copy()
+
+    submitted_data['GroupIndex'] = submitted_data['GroupIndex'].astype(int)
     data['GroupIndex'] = data['GroupIndex'].astype(int)
 
-    groups = sorted(data['GroupIndex'].unique())
+    groups = sorted(submitted_data['GroupIndex'].unique())
 
     if 'group_percentages' not in st.session_state:
         st.session_state.group_percentages = {group: 30 for group in groups}
@@ -168,7 +179,7 @@ def main():
     total_students = len(data)
     total_recipients_estimated = 0
     for group in groups:
-        num_students_in_group = len(data[data['GroupIndex'] == group])
+        num_students_in_group = len(submitted_data[submitted_data['GroupIndex'] == group])
         group_percentage = group_percentages.get(group, 0.3)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group))
         total_recipients_estimated += num_recipients
@@ -176,7 +187,7 @@ def main():
 
 
     recipients, total_recipients, total_students = calculate_scholarship_amounts_global(
-        data, max_amount_per_group, min_amount_per_group, group_percentages)
+        submitted_data, max_amount_per_group, min_amount_per_group, group_percentages)
 
     total_allocated = calculate_total_allocated_funds(recipients)
 
@@ -205,8 +216,10 @@ def main():
         )
 
     st.write(f"**Total Percentage of Students Receiving Scholarships:** {total_percentage_students:.2f}%")
+
     st.subheader("KÖDI vs. Scholarship Amount")
     visualize_distribution(recipients)
+
     st.subheader("Scholarship Recipients by Group")
     for group in groups:
         num_students_in_group = len(data[data['GroupIndex'] == group])
@@ -216,9 +229,8 @@ def main():
         if not group_recipients.empty:
             st.markdown(
                 f"### Group {group} (Total Students: {num_students_in_group}, Recipients: {num_recipients_in_group})")
-            st.dataframe(group_recipients[['GroupIndex', 'KépzésKód', 'KépzésNév',
-                                           'Neptun kód', 'Nyomtatási név', 'Képzési szint',
-                                           'Nyelv ID', 'Évfolyam', 'KÖDI', 'Scholarship Amount', 'Ösztöndíj átlag előző félév']])
+            st.dataframe(group_recipients[display_columns])
+
 
 if __name__ == "__main__":
     main()
