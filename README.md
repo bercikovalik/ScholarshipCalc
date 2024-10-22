@@ -34,6 +34,8 @@ A primary file with updated student year levels and scholarship indices, excludi
 A separate file containing students from small programs, preserving their original details along with their recalculated year level and Ösztöndíjindex.
 This solution not only simplifies the scholarship calculation process but also ensures compliance with the new regulation, creating a fairer and more accurate assessment for all students.
 
+![Screenshot of the working application as preview.](Preview.png)
+
 ## Handling Edge Cases
 The tool is designed to account for various edge cases, ensuring robust performance:
 
