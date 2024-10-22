@@ -1,2 +1,2 @@
-# OsztondijKalkulacio
+# Corvinus University scholarship calculation tool
  
