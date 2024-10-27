@@ -44,7 +44,7 @@ def redistribute_students(grouped, original_data):
     grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID']
 
     for keys in grouped[grouping_columns].drop_duplicates().values:
-        key_dict = dict(zip(grouping_columns, keys))
+        #key_dict = dict(zip(grouping_columns, keys))
         group_mask = (grouped['KépzésNév'] == keys[0]) & \
                      (grouped['Képzési szint'] == keys[1]) & \
                      (grouped['Nyelv ID'] == keys[2])

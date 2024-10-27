@@ -43,7 +43,7 @@ def get_group_percentages(groups):
     return group_percentages_decimal
 
 
-def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_per_group, group_percentages):
+def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0):
     global all_recipients
     recipients_list = []
     total_students = len(data)
@@ -79,8 +79,6 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     KODI_normalized = (all_recipients['KÖDI'] - KODI_cutoff_global) / (100 - KODI_cutoff_global + epsilon)
     KODI_normalized = np.clip(KODI_normalized, 0, 1)
 
-    k = 10
-    x0 = 0.5
 
     f_K = 1 / (1 + np.exp(-k * (KODI_normalized - x0)))
 
@@ -185,16 +183,15 @@ def main():
         total_recipients_estimated += num_recipients
     total_percentage_students = (total_recipients_estimated / total_students) * 100
 
+    st.subheader("Adjust Logistic Function Parameters")
+    k = st.number_input("Parameter k (steepness of the curve)", min_value=0.1, max_value=50.0, value=10.0, step=0.1)
+    x0 = st.number_input("Parameter x₀ (midpoint of the curve)", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
 
     recipients, total_recipients, total_students = calculate_scholarship_amounts_global(
-        submitted_data, max_amount_per_group, min_amount_per_group, group_percentages)
+        submitted_data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
 
     total_allocated = calculate_total_allocated_funds(recipients)
 
-    st.write("Here you can calculate the scholarship amount. The graph is a Sigmoid function, it serves as the "
-             "optimal distribution tool. Change the group percentages and min max values to meet the total allocated"
-             " fund amount. Under that, you can see the percentage of students with scholarship,"
-             " compared to total number of students (>23 credits, >3,8 average).")
     st.header("Results")
     if st.button("Export All Groups to Excel"):
         export_data_to_excel(recipients, required_columns)
