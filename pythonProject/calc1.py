@@ -136,7 +136,7 @@ def format_number_with_spaces(n):
 def main():
     st.title("Scholarship Distribution Calculator")
 
-    input_file = '/Users/bercelkovalik/Documents./InputOutput/output_data.xlsx'
+    input_file = '/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx'
     data = load_data(input_file)
 
     display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév',
