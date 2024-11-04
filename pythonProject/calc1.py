@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
 
 @st.cache_data
@@ -136,8 +135,14 @@ def format_number_with_spaces(n):
 def main():
     st.title("Scholarship Distribution Calculator")
 
-    input_file = '/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx'
-    data = load_data(input_file)
+    #input_file = '/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx'
+    st.subheader("Input file path")
+    input_file = st.text_input("Path to file",value='/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx', placeholder='Path to .xlsx')
+    if st.button("Load Data"):
+        data = load_data(input_file)
+    else:
+        st.stop()
+
 
     display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév',
                                            'KÖDI', 'Scholarship Amount',]
