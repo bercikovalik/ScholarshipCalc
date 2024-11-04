@@ -136,10 +136,11 @@ def main():
     st.title("Scholarship Distribution Calculator")
 
     #input_file = '/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx'
-    st.subheader("Input file path")
-    input_file = st.text_input("Path to file",value='/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx', placeholder='Path to .xlsx')
-    if st.button("Load Data"):
-        data = load_data(input_file)
+    st.subheader("Upload Input File")
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+
+    if uploaded_file is not None:
+        data = load_data(uploaded_file)
     else:
         st.stop()
 
