@@ -110,20 +110,20 @@ def visualize_distribution(recipients):
     plt.grid(True)
     st.pyplot(plt)
 
-def export_data_to_excel(recipients, required_columns):
+def export_data_to_excel(data_to_export, required_columns):
     export_columns = required_columns + ['Scholarship Amount']
 
-    recipients = recipients[export_columns]
+    data_to_export = data_to_export[export_columns]
 
     from io import BytesIO
     output = BytesIO()
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    recipients.to_excel(writer, index=False, sheet_name='Scholarship Recipients')
+    data_to_export.to_excel(writer, index=False, sheet_name='Scholarship Recipients')
     writer.close()
     processed_data = output.getvalue()
 
     st.download_button(label='Download Excel File', data=processed_data,
-                       file_name='Scholarship_Recipients.xlsx',
+                       file_name='Scholarship_Data.xlsx',
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 def format_number_with_spaces(n):
@@ -198,9 +198,13 @@ def main():
 
     total_allocated = calculate_total_allocated_funds(recipients)
 
+    all_students_data = pd.merge(data, recipients[['Neptun kód', 'Scholarship Amount']], on='Neptun kód', how='left')
+
+    all_students_data['Scholarship Amount'] = all_students_data['Scholarship Amount'].fillna('')
+
     st.header("Results")
-    if st.button("Export All Groups to Excel"):
-        export_data_to_excel(recipients, required_columns)
+    if st.button("Export All Students to Excel"):
+        export_data_to_excel(all_students_data, required_columns)
 
 
     formatted_total_allocated = format_number_with_spaces(total_allocated)

@@ -232,6 +232,9 @@ def remove_lower_kodi_duplicates(data):
         print("No duplicate Neptun kód found after KÖDI calculation.")
     return data.reset_index(drop=True)
 
+
+
+
 def main():
     st.title("Student Grouping")
     st.subheader("Upload an input file where 3,8 and 23 are filtered")
