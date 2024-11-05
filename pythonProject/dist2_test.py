@@ -236,6 +236,9 @@ def remove_lower_kodi_duplicates(data):
 
 
 def main():
+
+    st.set_page_config(page_title="Step 1")
+
     st.title("Student Grouping")
     st.subheader("Upload an input file where 3,8 and 23 are filtered")
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
@@ -245,18 +248,8 @@ def main():
     else:
         st.stop()
 
-
-    #input_file = '/Users/bercelkovalik/Documents./InputOutput/Adatok.xlsx'
-    #output_file = '/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx'
-    #separate_file = '/Users/bercelkovalik/Documents./InputOutput/small_groups_output_test.xlsx'
-
-
-    #data = load_data(input_file)
-
-    # Check for duplicate Neptun kód entries before processing
     check_duplicate_neptun_codes(data)
 
-    # Initial Function Calls
     remaining_data, small_groups_data_initial = filter_small_groups(data)
     grouped_data, original_data = group_students(remaining_data)
     updated_data = group_students_by_year(remaining_data)
@@ -272,21 +265,16 @@ def main():
     updated_data = calculate_scholarship_index(updated_data)
     updated_data = calculate_kodi(updated_data)
 
-    # Combine small groups data
     small_groups_data_combined = pd.concat([small_groups_data_initial, small_groups_data_after]).drop_duplicates().reset_index(drop=True)
 
-    # Sorting
     updated_data = sort_data(updated_data)
     small_groups_data_combined = sort_data(small_groups_data_combined)
 
-    # Add GroupIndex after sorting
     updated_data = add_group_index(updated_data)
     small_groups_data_combined = add_group_index(small_groups_data_combined)
 
-    # Save to Excel
     main_buffer, separate_buffer = save_to_excel(updated_data, small_groups_data_combined)
 
-    # Provide download buttons
     st.subheader("Download Output Files")
 
     st.download_button(

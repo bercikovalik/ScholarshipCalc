@@ -133,9 +133,9 @@ def format_number_with_spaces(n):
 
 
 def main():
+    st.set_page_config(page_title="Step 2")
     st.title("Scholarship Distribution Calculator")
 
-    #input_file = '/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx'
     st.subheader("Upload Input File")
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
 
