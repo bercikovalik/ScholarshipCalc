@@ -1,6 +1,10 @@
 import pandas as pd
 from openpyxl.styles import PatternFill
+import streamlit as st
+import io
 
+
+@st.cache_data
 def load_data(file_path):
     return pd.read_excel(file_path)
 
@@ -122,14 +126,22 @@ def recalculate_year_for_small_groups(data):
     data['Évfolyam'] = pd.cut(data['Aktív félévek'], bins=bins, labels=labels, right=True)
     return data
 
-def save_to_excel(main_data, separate_data, output_file, separate_file):
-    with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
+def save_to_excel(main_data, separate_data):
+    main_buffer = io.BytesIO()
+    with pd.ExcelWriter(main_buffer, engine='openpyxl') as writer:
         main_data.to_excel(writer, index=False, sheet_name='MainData')
         apply_alternate_row_coloring(writer, main_data, 'MainData')
+    main_buffer.seek(0)
 
-    with pd.ExcelWriter(separate_file, engine='openpyxl') as writer:
+
+    separate_buffer = io.BytesIO()
+    with pd.ExcelWriter(separate_buffer, engine='openpyxl') as writer:
         separate_data.to_excel(writer, index=False, sheet_name='SeparateData')
         apply_alternate_row_coloring(writer, separate_data, 'SeparateData')
+    separate_buffer.seek(0)
+
+    return main_buffer, separate_buffer
+
 
 def apply_alternate_row_coloring(writer, df, sheet_name):
     workbook = writer.book
@@ -220,47 +232,73 @@ def remove_lower_kodi_duplicates(data):
         print("No duplicate Neptun kód found after KÖDI calculation.")
     return data.reset_index(drop=True)
 
-# Input and Output file paths
-input_file = '/Users/bercelkovalik/Documents./InputOutput/Adatok.xlsx'
-output_file = '/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx'
-separate_file = '/Users/bercelkovalik/Documents./InputOutput/small_groups_output_test.xlsx'
+def main():
+    st.title("Student Grouping")
+    st.subheader("Upload an input file where 3,8 and 23 are filtered")
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+
+    if uploaded_file is not None:
+        data = load_data(uploaded_file)
+    else:
+        st.stop()
 
 
-data = load_data(input_file)
-
-# Check for duplicate Neptun kód entries before processing
-check_duplicate_neptun_codes(data)
-
-# Initial Function Calls
-remaining_data, small_groups_data_initial = filter_small_groups(data)
-grouped_data, original_data = group_students(remaining_data)
-updated_data = group_students_by_year(remaining_data)
-updated_data = calculate_scholarship_index(updated_data)
-updated_data = calculate_kodi(updated_data)
-
-updated_data = remove_lower_kodi_duplicates(updated_data)
-
-# Re-run the grouping and redistribution after removing duplicates
-remaining_data, small_groups_data_after = filter_small_groups(updated_data)
-grouped_data, original_data = group_students(remaining_data)
-updated_data = group_students_by_year(remaining_data)
-updated_data = calculate_scholarship_index(updated_data)
-updated_data = calculate_kodi(updated_data)
-
-# Combine small groups data
-small_groups_data_combined = pd.concat([small_groups_data_initial, small_groups_data_after]).drop_duplicates().reset_index(drop=True)
-
-# Sorting
-updated_data = sort_data(updated_data)
-small_groups_data_combined = sort_data(small_groups_data_combined)
-
-# Add GroupIndex after sorting
-updated_data = add_group_index(updated_data)
-small_groups_data_combined = add_group_index(small_groups_data_combined)
-
-# Save to Excel
-save_to_excel(updated_data, small_groups_data_combined, output_file, separate_file)
+    #input_file = '/Users/bercelkovalik/Documents./InputOutput/Adatok.xlsx'
+    #output_file = '/Users/bercelkovalik/Documents./InputOutput/output_data_test.xlsx'
+    #separate_file = '/Users/bercelkovalik/Documents./InputOutput/small_groups_output_test.xlsx'
 
 
-print("Process completed.")
+    #data = load_data(input_file)
 
+    # Check for duplicate Neptun kód entries before processing
+    check_duplicate_neptun_codes(data)
+
+    # Initial Function Calls
+    remaining_data, small_groups_data_initial = filter_small_groups(data)
+    grouped_data, original_data = group_students(remaining_data)
+    updated_data = group_students_by_year(remaining_data)
+    updated_data = calculate_scholarship_index(updated_data)
+    updated_data = calculate_kodi(updated_data)
+
+    updated_data = remove_lower_kodi_duplicates(updated_data)
+
+    # Re-run the grouping and redistribution after removing duplicates
+    remaining_data, small_groups_data_after = filter_small_groups(updated_data)
+    grouped_data, original_data = group_students(remaining_data)
+    updated_data = group_students_by_year(remaining_data)
+    updated_data = calculate_scholarship_index(updated_data)
+    updated_data = calculate_kodi(updated_data)
+
+    # Combine small groups data
+    small_groups_data_combined = pd.concat([small_groups_data_initial, small_groups_data_after]).drop_duplicates().reset_index(drop=True)
+
+    # Sorting
+    updated_data = sort_data(updated_data)
+    small_groups_data_combined = sort_data(small_groups_data_combined)
+
+    # Add GroupIndex after sorting
+    updated_data = add_group_index(updated_data)
+    small_groups_data_combined = add_group_index(small_groups_data_combined)
+
+    # Save to Excel
+    main_buffer, separate_buffer = save_to_excel(updated_data, small_groups_data_combined)
+
+    # Provide download buttons
+    st.subheader("Download Output Files")
+
+    st.download_button(
+        label="Download Main Data Excel",
+        data=main_buffer.getvalue(),
+        file_name="main_data.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    st.download_button(
+        label="Download Small Groups Data Excel",
+        data=separate_buffer.getvalue(),
+        file_name="small_groups_data.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+if __name__ == "__main__":
+    main()
