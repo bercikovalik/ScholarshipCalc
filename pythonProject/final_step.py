@@ -21,15 +21,12 @@ def main():
 def process_files(scholarship_df, original_df):
     st.subheader("Processing Files")
 
-    # Ensure 'Neptun kód' is present in both DataFrames
     if 'Neptun kód' not in scholarship_df.columns or 'Neptun kód' not in original_df.columns:
         st.error("Error: 'Neptun kód' column is missing in one of the files.")
         return
 
-    # Get the list of columns from Scholarship_Data.xlsx
     columns_to_keep = scholarship_df.columns.tolist()
 
-    # Find students in original_df not present in scholarship_df based on 'Neptun kód'
     merged_df = pd.merge(
         original_df,
         scholarship_df[['Neptun kód']],
@@ -39,19 +36,15 @@ def process_files(scholarship_df, original_df):
     )
     new_students_df = merged_df[merged_df['_merge'] == 'left_only'].copy()
 
-    # Keep only the columns present in Scholarship_Data.xlsx and original_df
     existing_columns = [col for col in columns_to_keep if col in new_students_df.columns]
     new_students_df = new_students_df[existing_columns]
 
-    # Identify missing columns
     missing_cols = [col for col in columns_to_keep if col not in new_students_df.columns]
 
-    # For 'Kredit szám', set it equal to 'ElőzőFélévTeljesítettKredit' if available
     if 'Kredit szám' in missing_cols:
         if 'ElőzőFélévTeljesítettKredit' in new_students_df.columns:
             new_students_df['Kredit szám'] = new_students_df['ElőzőFélévTeljesítettKredit']
         elif 'ElőzőFélévTeljesítettKredit' in original_df.columns:
-            # Map 'ElőzőFélévTeljesítettKredit' from original_df
             kredits = original_df[['Neptun kód', 'ElőzőFélévTeljesítettKredit']]
             new_students_df = pd.merge(new_students_df, kredits, on='Neptun kód', how='left')
             new_students_df['Kredit szám'] = new_students_df['ElőzőFélévTeljesítettKredit']
@@ -59,25 +52,54 @@ def process_files(scholarship_df, original_df):
             new_students_df['Kredit szám'] = ''
         missing_cols.remove('Kredit szám')
 
-    # Add other missing columns with empty strings
     for col in missing_cols:
         new_students_df[col] = ''
 
-    # Reorder columns to match columns_to_keep
     new_students_df = new_students_df[columns_to_keep]
 
-    # Combine scholarship_df with new_students_df
     combined_df = pd.concat([scholarship_df, new_students_df], ignore_index=True)
 
-    # Display the combined DataFrame
+    required_columns = ['Ösztöndíj átlag előző félév', 'ElőzőFélévTeljesítettKredit']
+    for col in required_columns:
+        if col not in combined_df.columns:
+            st.error(f"Error: Column '{col}' is missing in the data.")
+            return
+
+    combined_df['Ösztöndíj átlag előző félév'] = pd.to_numeric(combined_df['Ösztöndíj átlag előző félév'],
+                                                               errors='coerce')
+    combined_df['ElőzőFélévTeljesítettKredit'] = pd.to_numeric(combined_df['ElőzőFélévTeljesítettKredit'],
+                                                               errors='coerce')
+
+    conditions_met = (combined_df['Ösztöndíj átlag előző félév'] >= 3.8) & (
+                combined_df['ElőzőFélévTeljesítettKredit'] >= 23)
+
+    scholarship_amount_idx = combined_df.columns.get_loc('Scholarship Amount')
+
+    combined_df.insert(scholarship_amount_idx, 'Jogosultság döntés',
+                       conditions_met.map({True: 'Jogosult', False: 'Nem Jogosult'}))
+
+    def determine_indoklas(row):
+        if row['Jogosultság döntés'] == 'Jogosult':
+            return 'Jogosult'
+        else:
+            reasons = []
+            if row['Ösztöndíj átlag előző félév'] < 3.8:
+                reasons.append('Nem érte el a minimum átlagot')
+            if row['ElőzőFélévTeljesítettKredit'] < 23:
+                reasons.append('Nem érte el a minimum kreditet')
+            return ' és '.join(reasons)
+
+    combined_df['Jogosultság indoklás'] = combined_df.apply(determine_indoklas, axis=1)
+
+    jogosultsag_dontes_idx = combined_df.columns.get_loc('Jogosultság döntés')
+    combined_df.insert(jogosultsag_dontes_idx + 1, 'Jogosultság indoklás', combined_df.pop('Jogosultság indoklás'))
+
     st.subheader("Combined Data")
     st.write(combined_df)
 
-    # Provide an option to download the combined DataFrame
     download_combined_df(combined_df)
 
 def download_combined_df(combined_df):
-    # Convert DataFrame to Excel in memory
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         combined_df.to_excel(writer, index=False, sheet_name='Combined_Data')
