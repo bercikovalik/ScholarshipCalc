@@ -1,6 +1,8 @@
 import streamlit as st
 
 def main():
+    st.set_page_config(page_title="Main menu")
+
 
     st.title("Scholarship Calculation Main Menu")
     st.subheader("This is the main page of the application.", divider=True)
