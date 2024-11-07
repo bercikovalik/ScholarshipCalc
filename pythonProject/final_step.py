@@ -80,6 +80,30 @@ def process_files(scholarship_df, original_df):
 
     def determine_indoklas(row):
         if row['Jogosultság döntés'] == 'Jogosult':
+            return 'Ösztöndíjra jogosult'
+        else:
+            reasons = []
+            if row['Ösztöndíj átlag előző félév'] < 3.8:
+                reasons.append('Nem érte el a minimum átlagot')
+            if row['ElőzőFélévTeljesítettKredit'] < 23:
+                reasons.append('Nem érte el a minimum kreditet')
+            return ' és '.join(reasons)
+
+
+
+    combined_df['Jogosultság indoklás'] = combined_df.apply(determine_indoklas, axis=1)
+
+    jogosultsag_dontes_idx = combined_df.columns.get_loc('Jogosultság döntés')
+    combined_df.insert(jogosultsag_dontes_idx + 1, 'Jogosultság indoklás', combined_df.pop('Jogosultság indoklás'))
+    jogosultsag_indoklas_idx = combined_df.columns.get_loc('Jogosultság indoklás')
+    combined_df['Scholarship Amount'] = pd.to_numeric(combined_df['Scholarship Amount'],
+                                                               errors='coerce')
+    conditions_met2 = (combined_df['Scholarship Amount'] > 1)
+    combined_df.insert(jogosultsag_indoklas_idx + 1, 'Ösztöndíj döntés',
+                       conditions_met2.map({True: 'Jogosult', False: 'Nem Jogosult'}))
+
+    def determine_osztondij_indoklas(row):
+        if row['Ösztöndíj döntés'] == 'Jogosult':
             return 'Jogosult'
         else:
             reasons = []
@@ -89,10 +113,9 @@ def process_files(scholarship_df, original_df):
                 reasons.append('Nem érte el a minimum kreditet')
             return ' és '.join(reasons)
 
-    combined_df['Jogosultság indoklás'] = combined_df.apply(determine_indoklas, axis=1)
+    osztondij_dontes_idx = combined_df.columns.get_loc('Ösztöndíj döntés')
 
-    jogosultsag_dontes_idx = combined_df.columns.get_loc('Jogosultság döntés')
-    combined_df.insert(jogosultsag_dontes_idx + 1, 'Jogosultság indoklás', combined_df.pop('Jogosultság indoklás'))
+    combined_df['Ösztöndíj indoklás'] = combined_df.apply(determine_osztondij_indoklas, axis=1)
 
     st.subheader("Combined Data")
     st.write(combined_df)

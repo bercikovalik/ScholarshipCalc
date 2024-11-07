@@ -82,12 +82,22 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     f_K = 1 / (1 + np.exp(-k * (KODI_normalized - x0)))
 
     all_recipients['Scholarship Amount'] = min_amount_per_group + f_K * (max_amount_per_group - min_amount_per_group)
-
     all_recipients['Scholarship Amount'] = all_recipients['Scholarship Amount'].round(2)
 
     cols = all_recipients.columns.tolist()
     cols.insert(0, cols.pop(cols.index('Scholarship Amount')))
     all_recipients = all_recipients[cols]
+
+    group_min_kodi = all_recipients.groupby('GroupIndex')['KÖDI'].min().reset_index()
+    group_min_kodi.rename(columns={'KÖDI': 'Group Minimum KÖDI'}, inplace=True)
+
+    all_recipients = pd.merge(all_recipients, group_min_kodi, on='GroupIndex', how='left')
+
+    cols = all_recipients.columns.tolist()
+    cols.insert(0, cols.pop(cols.index('Scholarship Amount')))
+    cols.insert(1, cols.pop(cols.index('Group Minimum KÖDI')))
+    all_recipients = all_recipients[cols]
+
     return all_recipients, total_recipients, total_students
 
 def calculate_total_allocated_funds(recipients):
@@ -111,7 +121,7 @@ def visualize_distribution(recipients):
     st.pyplot(plt)
 
 def export_data_to_excel(data_to_export, required_columns):
-    export_columns = required_columns + ['Scholarship Amount']
+    export_columns = required_columns + ['Scholarship Amount'] + ['Group Minimum KÖDI']
 
     data_to_export = data_to_export[export_columns]
 
@@ -153,8 +163,6 @@ def main():
                         'Ösztöndíj átlag előző félév', 'Képzési szint', 'Nyelv ID', 'Tagozat',
                         'ElőzőFélévTeljesítettKredit', 'Hallgató kérvény azonosító', 'Évfolyam',
                         'Kredit szám', 'Ösztöndíjindex', 'KÖDI']
-
-    export_columns = required_columns + ['Scholarship Amount']
 
     for col in required_columns:
         if col not in data.columns:
@@ -198,9 +206,14 @@ def main():
 
     total_allocated = calculate_total_allocated_funds(recipients)
 
-    all_students_data = pd.merge(data, recipients[['Neptun kód', 'Scholarship Amount']], on='Neptun kód', how='left')
-
+    all_students_data = pd.merge(
+        data,
+        recipients[['Neptun kód', 'Scholarship Amount', 'Group Minimum KÖDI']],
+        on='Neptun kód',
+        how='left'
+    )
     all_students_data['Scholarship Amount'] = all_students_data['Scholarship Amount'].fillna('')
+    all_students_data['Group Minimum KÖDI'] = all_students_data['Group Minimum KÖDI'].fillna('')
 
     st.header("Results")
     if st.button("Export All Students to Excel"):
