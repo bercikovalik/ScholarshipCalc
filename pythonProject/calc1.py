@@ -69,8 +69,8 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
         else:
             continue
 
-        all_recipients = pd.concat(recipients_list, ignore_index=True)
-        all_recipients.drop_duplicates(inplace=True)
+    all_recipients = pd.concat(recipients_list, ignore_index=True)
+    all_recipients.drop_duplicates(inplace=True)
 
     KODI_cutoff_global = all_recipients['KÖDI'].min()
 
