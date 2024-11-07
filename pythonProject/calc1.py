@@ -87,14 +87,6 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     # Merge this back into all_recipients
     all_recipients = pd.merge(all_recipients, group_min_kodi, on='GroupIndex', how='left')
 
-    # Rearrange columns after merging 'Group Minimum KÖDI'
-    cols = all_recipients.columns.tolist()
-    # Move 'Scholarship Amount' to the first position
-    cols.insert(0, cols.pop(cols.index('Scholarship Amount')))
-    # Place 'Group Minimum KÖDI' right after 'Scholarship Amount'
-    cols.insert(1, cols.pop(cols.index('Group Minimum KÖDI')))
-    all_recipients = all_recipients[cols]
-
     return all_recipients, total_recipients, total_students
 
 def calculate_total_allocated_funds(recipients):
