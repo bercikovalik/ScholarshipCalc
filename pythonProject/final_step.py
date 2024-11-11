@@ -102,26 +102,27 @@ def process_files(scholarship_df, original_df):
     combined_df.insert(jogosultsag_indoklas_idx + 1, 'Ösztöndíj döntés',
                        conditions_met2.map({True: 'Jogosult', False: 'Nem Jogosult'}))
 
+    combined_df['Group Minimum KÖDI'] = pd.to_numeric(combined_df['Group Minimum KÖDI'],
+                                                               errors='coerce')
+    combined_df['KÖDI'] = pd.to_numeric(combined_df['KÖDI'], errors='coerce')
+
     def determine_osztondij_indoklas(row):
         if row['Ösztöndíj döntés'] == 'Jogosult':
-            return 'Jogosult'
+            if row['Hallgató kérvény azonosító'] == '':
+                return 'Nem pályázott'
+            else:
+                return 'Jogosult'
         else:
-            reasons = []
             if row['Ösztöndíj átlag előző félév'] < 3.8:
-                reasons.append('Nem érte el a minimum átlagot')
+                return 'Nem érte el a minimum átlagot'
             if row['ElőzőFélévTeljesítettKredit'] < 23:
-                reasons.append('Nem érte el a minimum kreditet')
-            return ' és '.join(reasons)
+                return 'Nem érte el a minimum kreditet'
+            if row['Group Minimum KÖDI'] > row['KÖDI']:
+                return 'Nem érte el a csoport minimum átlagát'
 
     combined_df['Ösztöndíj indoklás'] = combined_df.apply(determine_osztondij_indoklas, axis=1)
-    osztondij_indoklas_idx = combined_df.columns.get_loc('Ösztöndíj döntés')
-    combined_df.insert(osztondij_indoklas_idx + 1, 'Ösztöndíj indoklás', combined_df.pop('Jogosultság indoklás'))
-    osztondij_dontes_idx = combined_df.columns.get_loc('Jogosultság indoklás')
-    combined_df['Scholarship Amount'] = pd.to_numeric(combined_df['Scholarship Amount'],
-                                                      errors='coerce')
-    conditions_met2 = (combined_df['Scholarship Amount'] > 1)
-    combined_df.insert(jogosultsag_indoklas_idx + 1, 'Ösztöndíj döntés',
-                       conditions_met2.map({True: 'Jogosult', False: 'Nem Jogosult'}))
+    osztondij_dontes_idx = combined_df.columns.get_loc('Ösztöndíj döntés')
+    combined_df.insert(osztondij_dontes_idx + 1, 'Ösztöndíj indoklás', combined_df.pop('Jogosultság indoklás'))
 
     st.subheader("Combined Data")
     st.write(combined_df)

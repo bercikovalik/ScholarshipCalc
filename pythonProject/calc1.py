@@ -47,6 +47,7 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     recipients_list = []
     total_students = len(data)
     total_recipients = 0
+    group_min_kodi_dict = {}
 
     for group in data['GroupIndex'].unique():
         group_data = data[data['GroupIndex'] == group].copy()
@@ -64,10 +65,12 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
             all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates()
             num_recipients_actual = len(all_recipients_group)
             total_recipients += num_recipients_actual
+            group_min_kodi_dict[group] = last_included_KODI
+
             all_recipients_group['Group Minimum KÖDI'] = last_included_KODI
             recipients_list.append(all_recipients_group)
         else:
-            continue
+            group_min_kodi_dict[group] = np.nan
 
     all_recipients = pd.concat(recipients_list, ignore_index=True)
     all_recipients.drop_duplicates(inplace=True)
@@ -89,16 +92,15 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     cols.insert(1, cols.pop(cols.index('Group Minimum KÖDI')))
     all_recipients = all_recipients[cols]
 
-    return all_recipients, total_recipients, total_students
+    return all_recipients, total_recipients, total_students, group_min_kodi_dict
 
 def calculate_total_allocated_funds(recipients):
     total_allocated = recipients['Scholarship Amount'].sum()
     return total_allocated
 
-def objective_function_global(gamma, data, max_amount_per_group, min_amount_per_group, group_percentages, total_fund):
-    recipients, _, _ = calculate_scholarship_amounts_global(
-        data, gamma, max_amount_per_group, min_amount_per_group, group_percentages
-    )
+def objective_function_global(data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0, total_fund):
+    recipients, _, _, _ = calculate_scholarship_amounts_global(
+         data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
     total_allocated = calculate_total_allocated_funds(recipients)
     return abs(total_fund - total_allocated)
 
@@ -153,7 +155,7 @@ def main():
                         'Felvétel féléve', 'Aktív félévek', 'Státusz2 jelen félév',
                         'Ösztöndíj átlag előző félév', 'Képzési szint', 'Nyelv ID', 'Tagozat',
                         'ElőzőFélévTeljesítettKredit', 'Hallgató kérvény azonosító', 'Évfolyam',
-                        'Kredit szám', 'Ösztöndíjindex', 'KÖDI']
+                        'Kredit szám', 'Ösztöndíjindex', 'KÖDI', 'Group Minimum KÖDI']
 
     for col in required_columns:
         if col not in data.columns:
@@ -192,10 +194,14 @@ def main():
     k = st.number_input("Parameter k (steepness of the curve)", min_value=0.1, max_value=50.0, value=10.0, step=0.1)
     x0 = st.number_input("Parameter x₀ (midpoint of the curve)", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
 
-    recipients, total_recipients, total_students = calculate_scholarship_amounts_global(
+    recipients, total_recipients, total_students, group_min_kodi_dict= calculate_scholarship_amounts_global(
         submitted_data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
 
     total_allocated = calculate_total_allocated_funds(recipients)
+
+    group_min_kodi_df = pd.DataFrame(list(group_min_kodi_dict.items()), columns=['GroupIndex', 'Group Minimum KÖDI'])
+
+    data = pd.merge(data, group_min_kodi_df, on='GroupIndex', how='left')
 
     all_students_data = pd.merge(
         data,
