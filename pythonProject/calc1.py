@@ -64,7 +64,7 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
             all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates()
             num_recipients_actual = len(all_recipients_group)
             total_recipients += num_recipients_actual
-
+            all_recipients_group['Group Minimum KÖDI'] = last_included_KODI
             recipients_list.append(all_recipients_group)
         else:
             continue
@@ -82,11 +82,11 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     f_K = 1 / (1 + np.exp(-k * (KODI_normalized - x0)))
 
     all_recipients['Scholarship Amount'] = min_amount_per_group + f_K * (max_amount_per_group - min_amount_per_group)
-
     all_recipients['Scholarship Amount'] = all_recipients['Scholarship Amount'].round(2)
 
     cols = all_recipients.columns.tolist()
     cols.insert(0, cols.pop(cols.index('Scholarship Amount')))
+    cols.insert(1, cols.pop(cols.index('Group Minimum KÖDI')))
     all_recipients = all_recipients[cols]
 
     return all_recipients, total_recipients, total_students
@@ -112,7 +112,7 @@ def visualize_distribution(recipients):
     st.pyplot(plt)
 
 def export_data_to_excel(data_to_export, required_columns):
-    export_columns = required_columns + ['Scholarship Amount'] + ['Group Minimum KÖDI']
+    export_columns = required_columns + ['Scholarship Amount', 'Group Minimum KÖDI']
 
     data_to_export = data_to_export[export_columns]
 
