@@ -205,7 +205,7 @@ def main():
 
     all_students_data = pd.merge(
         data,
-        recipients[['Neptun kód', 'Scholarship Amount', 'Group Minimum KÖDI']],
+        recipients[['Neptun kód', 'Scholarship Amount']],
         on='Neptun kód',
         how='left'
     )
