@@ -59,6 +59,20 @@ def process_files(scholarship_df, original_df):
 
     combined_df = pd.concat([scholarship_df, new_students_df], ignore_index=True)
 
+    if 'GroupIndex' not in combined_df.columns:
+        st.error("Error: 'GroupIndex' column is missing in the data.")
+        return
+
+    group_min_kodi = scholarship_df[['GroupIndex', 'Group Minimum KÖDI']].drop_duplicates()
+    group_min_kodi = group_min_kodi.dropna(subset=['Group Minimum KÖDI'])
+
+    combined_df = pd.merge(
+        combined_df.drop(columns=['Group Minimum KÖDI']),
+        group_min_kodi,
+        on='GroupIndex',
+        how='left'
+    )
+
     required_columns = ['Ösztöndíj átlag előző félév', 'ElőzőFélévTeljesítettKredit']
     for col in required_columns:
         if col not in combined_df.columns:
@@ -107,22 +121,22 @@ def process_files(scholarship_df, original_df):
     combined_df['KÖDI'] = pd.to_numeric(combined_df['KÖDI'], errors='coerce')
 
     def determine_osztondij_indoklas(row):
-        if row['Ösztöndíj döntés'] == 'Jogosult':
-            if row['Hallgató kérvény azonosító'] == '':
-                return 'Nem pályázott'
-            else:
-                return 'Jogosult'
+        if pd.isna(row['Hallgató kérvény azonosító']):
+            return 'Nem pályázott'
+        elif row['Ösztöndíj döntés'] == 'Jogosult':
+            return 'Jogosult'
+        elif row['Ösztöndíj átlag előző félév'] < 3.8:
+            return 'Nem érte el a minimum átlagot'
+        elif row['ElőzőFélévTeljesítettKredit'] < 23:
+            return 'Nem érte el a minimum kreditet'
+        elif row['Group Minimum KÖDI'] > row['KÖDI']:
+            return 'Nem érte el a csoport minimum átlagát'
         else:
-            if row['Ösztöndíj átlag előző félév'] < 3.8:
-                return 'Nem érte el a minimum átlagot'
-            if row['ElőzőFélévTeljesítettKredit'] < 23:
-                return 'Nem érte el a minimum kreditet'
-            if row['Group Minimum KÖDI'] > row['KÖDI']:
-                return 'Nem érte el a csoport minimum átlagát'
+            return 'Egyéb ok'
 
     combined_df['Ösztöndíj indoklás'] = combined_df.apply(determine_osztondij_indoklas, axis=1)
     osztondij_dontes_idx = combined_df.columns.get_loc('Ösztöndíj döntés')
-    combined_df.insert(osztondij_dontes_idx + 1, 'Ösztöndíj indoklás', combined_df.pop('Jogosultság indoklás'))
+    combined_df.insert(osztondij_dontes_idx + 1, 'Ösztöndíj indoklás', combined_df.pop('Ösztöndíj indoklás'))
 
     st.subheader("Combined Data")
     st.write(combined_df)
