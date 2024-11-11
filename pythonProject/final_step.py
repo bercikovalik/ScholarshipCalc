@@ -113,9 +113,15 @@ def process_files(scholarship_df, original_df):
                 reasons.append('Nem érte el a minimum kreditet')
             return ' és '.join(reasons)
 
-    osztondij_dontes_idx = combined_df.columns.get_loc('Ösztöndíj döntés')
-
     combined_df['Ösztöndíj indoklás'] = combined_df.apply(determine_osztondij_indoklas, axis=1)
+    osztondij_indoklas_idx = combined_df.columns.get_loc('Ösztöndíj döntés')
+    combined_df.insert(osztondij_indoklas_idx + 1, 'Ösztöndíj indoklás', combined_df.pop('Jogosultság indoklás'))
+    osztondij_dontes_idx = combined_df.columns.get_loc('Jogosultság indoklás')
+    combined_df['Scholarship Amount'] = pd.to_numeric(combined_df['Scholarship Amount'],
+                                                      errors='coerce')
+    conditions_met2 = (combined_df['Scholarship Amount'] > 1)
+    combined_df.insert(jogosultsag_indoklas_idx + 1, 'Ösztöndíj döntés',
+                       conditions_met2.map({True: 'Jogosult', False: 'Nem Jogosult'}))
 
     st.subheader("Combined Data")
     st.write(combined_df)
