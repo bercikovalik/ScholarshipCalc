@@ -18,7 +18,7 @@ def main():
 
     with st.container(border=True):
         st.subheader("Step 3 - _Final merge of excels_")
-        st.markdown("[Go to page](-)")
+        st.markdown("[Go to page](https://finalstep.streamlit.app)")
 
 if __name__ == "__main__":
     main()
