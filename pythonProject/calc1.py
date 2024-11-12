@@ -155,7 +155,7 @@ def main():
                         'Felvétel féléve', 'Aktív félévek', 'Státusz2 jelen félév',
                         'Ösztöndíj átlag előző félév', 'Képzési szint', 'Nyelv ID', 'Tagozat',
                         'ElőzőFélévTeljesítettKredit', 'Hallgató kérvény azonosító', 'Évfolyam',
-                        'Kredit szám', 'Ösztöndíjindex', 'KÖDI', 'Group Minimum KÖDI']
+                        'Kredit szám', 'Ösztöndíjindex', 'KÖDI']
 
     for col in required_columns:
         if col not in data.columns:
