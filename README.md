@@ -1,12 +1,24 @@
 # Corvinus University scholarship calculation tool
+
+The tools can be accessed through this landing page: https://mainmenu.streamlit.app
+
 This project was developed in response to recent changes in the Regulation on Student Fees and Benefits at my university, requiring a new approach to scholarship calculations. The task was to create a tool that automates the calculation of scholarship scores for students, addressing both complex grouping and redistribution logic while maintaining transparency and accuracy in the process.
 
 ## Project Overview
-The tool processes student data from an input Excel file containing 7000+ records to calculate a scholarship index (Ösztöndíjindex) based on their academic performance and credits. Students are grouped according to their program name ('KépzésNév'), level of study ('Képzési szint'), and language ('Nyelv ID'—either 'angol' or 'magyar'). They are further classified into year levels based on their active semesters: 
+The tool processes student data from an input Excel file containing 7000+ records to calculate a scholarship index (Ösztöndíjindex) based on their academic performance and credits. 
+
+### 1st Step
+Students are grouped according to their program name ('KépzésNév'), level of study ('Képzési szint'), and language ('Nyelv ID'—either 'angol' or 'magyar'). They are further classified into year levels based on their active semesters: 
 - 1-2 semesters: 1st year
 - 3-4 semesters: 2nd year
 - 5-6 semesters: 3rd year
 - 7-8 semesters: 4th year
+
+### 2nd Step
+Here we need to upload the output excel file of 1st step, and the tool will distribute the given scholarship fund between the students by a Sigmoid function. The curve's steepness and midpoint is adjustable, moreover the maximum and minimum receivable amount, and the percentage of students getting scholarship in each group.
+
+### 3rd Step
+After the completion of the calculation, we only need to merge the original input excel with the 2nd step output file, and we will have a complete dataset containing both students who didn't get and those who got scholarship.
 
 Year groups with fewer than 10 students are redistributed to the closest adjacent group. This redistribution process ensures that students from smaller groups are merged with larger groups, running upward or downward depending on availability, to maintain a minimum threshold of 10 students per group. If an entire program has fewer than 10 students, they are excluded from redistribution and processed separately.
 
