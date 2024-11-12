@@ -65,4 +65,4 @@ This solution not only simplifies the scholarship calculation process but also e
 - Streamlit: For creating an interactive GUI that allows real-time adjustments and visualizations.
 - Excel: As the primary format for input and output files, ensuring easy integration with existing university workflows.
 
-Feel free to explore the code and adapt it to similar scholarship distribution scenarios. Contributions are welcome!
+Feel free to explore the code and adapt it to similar scholarship distribution scenarios.
