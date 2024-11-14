@@ -14,6 +14,8 @@ Students are grouped according to their program name ('KépzésNév'), level of 
 - 5-6 semesters: 3rd year
 - 7-8 semesters: 4th year
 
+Moreover, the students Scholarship Index and KÖDI (see below the formula) is calculated and added to the table.
+
 ### 2nd Step
 Here we need to upload the output excel file of 1st step, and the tool will distribute the given scholarship fund between the students by a Sigmoid function. The curve's steepness and midpoint is adjustable, moreover the maximum and minimum receivable amount, and the percentage of students getting scholarship in each group.
 
