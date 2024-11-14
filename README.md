@@ -1,4 +1,4 @@
-# Corvinus University scholarship calculation tool
+# University scholarship calculation tool
 
 The tools can be accessed through this landing page: https://mainmenu.streamlit.app
 
