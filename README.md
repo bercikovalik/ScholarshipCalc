@@ -1,6 +1,8 @@
-# Corvinus University scholarship calculation tool
+# University scholarship calculation tool
 
 The tools can be accessed through this landing page: https://mainmenu.streamlit.app
+
+// To test the application, download the Sample_Data.xlsx. For protection of personal information, this is the same structure used in the original excels, just with AI generated data, and only 500 rows instead of 7000+. //
 
 This project was developed in response to recent changes in the Regulation on Student Fees and Benefits at my university, requiring a new approach to scholarship calculations. The task was to create a tool that automates the calculation of scholarship scores for students, addressing both complex grouping and redistribution logic while maintaining transparency and accuracy in the process.
 
@@ -13,6 +15,8 @@ Students are grouped according to their program name ('KépzésNév'), level of 
 - 3-4 semesters: 2nd year
 - 5-6 semesters: 3rd year
 - 7-8 semesters: 4th year
+
+Moreover, the students Scholarship Index and KÖDI (see below the formula) is calculated and added to the table.
 
 ### 2nd Step
 Here we need to upload the output excel file of 1st step, and the tool will distribute the given scholarship fund between the students by a Sigmoid function. The curve's steepness and midpoint is adjustable, moreover the maximum and minimum receivable amount, and the percentage of students getting scholarship in each group.
