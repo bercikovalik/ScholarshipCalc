@@ -2,6 +2,8 @@
 
 The tools can be accessed through this landing page: https://mainmenu.streamlit.app
 
+// To test the application, download the Sample_Data.xlsx. For protection of personal information, this is the same structure used in the original excels, just with AI generated data. //
+
 This project was developed in response to recent changes in the Regulation on Student Fees and Benefits at my university, requiring a new approach to scholarship calculations. The task was to create a tool that automates the calculation of scholarship scores for students, addressing both complex grouping and redistribution logic while maintaining transparency and accuracy in the process.
 
 ## Project Overview
