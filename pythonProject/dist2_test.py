@@ -267,6 +267,8 @@ def main():
 
     small_groups_data_combined = pd.concat([small_groups_data_initial, small_groups_data_after]).drop_duplicates().reset_index(drop=True)
 
+    small_groups_data_combined = calculate_scholarship_index(small_groups_data_combined)
+
     updated_data = sort_data(updated_data)
     small_groups_data_combined = sort_data(small_groups_data_combined)
 
