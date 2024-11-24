@@ -204,7 +204,7 @@ def main():
 
     total_allocated = calculate_total_allocated_funds(recipients)
 
-    group_min_kodi_df = pd.DataFrame(list(group_min_kodi_dict.items()), columns=['GroupIndex', 'Group Minimum KÖDI'])
+    group_min_kodi_df = pd.DataFrame(list(group_min_kodi_dict.items()), columns=['GroupIndex', 'Group Minimum Ösztöndíjindex'])
 
     data = pd.merge(data, group_min_kodi_df, on='GroupIndex', how='left')
 
