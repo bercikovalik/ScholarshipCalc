@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
+from pygments.unistring import combine
+
+
 def main():
     st.title("Final Step: Merge Scholarship Data with All Students")
     st.subheader("Upload Files")
@@ -92,6 +95,7 @@ def process_files(scholarship_df, original_df):
     combined_df.insert(scholarship_amount_idx, 'Jogosultság döntés',
                        conditions_met.map({True: 'Jogosult', False: 'Nem Jogosult'}))
 
+
     def determine_indoklas(row):
         if row['Jogosultság döntés'] == 'Jogosult':
             return 'Ösztöndíjra jogosult'
@@ -140,6 +144,11 @@ def process_files(scholarship_df, original_df):
     combined_df['Ösztöndíj indoklás'] = combined_df.apply(determine_osztondij_indoklas, axis=1)
     osztondij_dontes_idx = combined_df.columns.get_loc('Ösztöndíj döntés')
     combined_df.insert(osztondij_dontes_idx + 1, 'Ösztöndíj indoklás', combined_df.pop('Ösztöndíj indoklás'))
+
+    negy_havi_osztondij_idx = combined_df.columns.get_loc('Scholarship Amount') + 1
+    combined_df.insert(negy_havi_osztondij_idx, '4 havi Ösztöndíj', combined_df['Scholarship Amount'] * 4)
+
+    combined_df = combined_df.rename(columns={'Scholarship Amount' : '1 havi Ösztöndíj'})
 
     st.subheader("Combined Data")
     st.write(combined_df)
