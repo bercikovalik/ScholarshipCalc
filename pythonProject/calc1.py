@@ -48,6 +48,7 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     total_students = len(data)
     total_recipients = 0
     group_min_kodi_dict = {}
+    group_min_index_dict = {}
 
     for group in data['GroupIndex'].unique():
         group_data = data[data['GroupIndex'] == group].copy()
@@ -64,13 +65,17 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
             additional_recipients = group_data[group_data['KÖDI'] == last_included_KODI]
             all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates()
             num_recipients_actual = len(all_recipients_group)
-            total_recipients += num_recipients_actual
-            group_min_kodi_dict[group] = last_included_KODI
 
-            all_recipients_group['Group Minimum KÖDI'] = last_included_KODI
+            total_recipients += num_recipients_actual
+            min_kodi_student = group_data[group_data['KÖDI'] == last_included_KODI].iloc[-1]
+            group_min_kodi_dict[group] = last_included_KODI
+            group_min_index_dict[group] = min_kodi_student['Ösztöndíjindex']
+
+            all_recipients_group['Group Minimum Ösztöndíjindex'] = min_kodi_student['Ösztöndíjindex']
             recipients_list.append(all_recipients_group)
         else:
             group_min_kodi_dict[group] = np.nan
+            group_min_index_dict[group] = np.nan
 
     all_recipients = pd.concat(recipients_list, ignore_index=True)
     all_recipients.drop_duplicates(inplace=True)
@@ -92,7 +97,7 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     cols.insert(1, cols.pop(cols.index('Group Minimum KÖDI')))
     all_recipients = all_recipients[cols]
 
-    return all_recipients, total_recipients, total_students, group_min_kodi_dict
+    return all_recipients, total_recipients, total_students, group_min_index_dict
 
 def calculate_total_allocated_funds(recipients):
     total_allocated = recipients['Scholarship Amount'].sum()

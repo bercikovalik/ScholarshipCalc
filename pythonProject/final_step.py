@@ -112,6 +112,9 @@ def process_files(scholarship_df, original_df):
     jogosultsag_indoklas_idx = combined_df.columns.get_loc('Jogosultság indoklás')
     combined_df['Scholarship Amount'] = pd.to_numeric(combined_df['Scholarship Amount'],
                                                                errors='coerce')
+    combined_df['Scholarship Amount'] = pd.to_numeric(combined_df['Scholarship Amount'], errors='coerce')
+    combined_df['Scholarship Amount'] = (combined_df['Scholarship Amount'] / 100).round() * 100
+
     conditions_met2 = (combined_df['Scholarship Amount'] > 1)
     combined_df.insert(jogosultsag_indoklas_idx + 1, 'Ösztöndíj döntés',
                        conditions_met2.map({True: 'Jogosult', False: 'Nem Jogosult'}))
