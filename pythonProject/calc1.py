@@ -94,7 +94,7 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
 
     cols = all_recipients.columns.tolist()
     cols.insert(0, cols.pop(cols.index('Scholarship Amount')))
-    cols.insert(1, cols.pop(cols.index('Group Minimum KÖDI')))
+    cols.insert(1, cols.pop(cols.index('Group Minimum Ösztöndíjindex')))
     all_recipients = all_recipients[cols]
 
     return all_recipients, total_recipients, total_students, group_min_index_dict
