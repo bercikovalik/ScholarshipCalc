@@ -90,7 +90,10 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     f_K = 1 / (1 + np.exp(-k * (KODI_normalized - x0)))
 
     all_recipients['Scholarship Amount'] = min_amount_per_group + f_K * (max_amount_per_group - min_amount_per_group)
-    all_recipients['Scholarship Amount'] = all_recipients['Scholarship Amount'].round(2)
+
+    all_recipients.loc[all_recipients['KÖDI'] == 100, 'Scholarship Amount'] = max_amount_per_group
+
+    all_recipients['Scholarship Amount'] = (all_recipients['Scholarship Amount'] / 100).round() * 100
 
     cols = all_recipients.columns.tolist()
     cols.insert(0, cols.pop(cols.index('Scholarship Amount')))
