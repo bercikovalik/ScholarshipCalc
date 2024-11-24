@@ -66,12 +66,12 @@ def process_files(scholarship_df, original_df):
         st.error("Error: 'GroupIndex' column is missing in the data.")
         return
 
-    group_min_kodi = scholarship_df[['GroupIndex', 'Group Minimum KÖDI']].drop_duplicates()
-    group_min_kodi = group_min_kodi.dropna(subset=['Group Minimum KÖDI'])
+    group_min_osztondijindex = scholarship_df[['GroupIndex', 'Group Minimum Ösztöndíjindex']].drop_duplicates()
+    group_min_osztondijindex = group_min_osztondijindex.dropna(subset=['Group Minimum Ösztöndíjindex'])
 
     combined_df = pd.merge(
-        combined_df.drop(columns=['Group Minimum KÖDI']),
-        group_min_kodi,
+        combined_df.drop(columns=['Group Minimum Ösztöndíjindex']),
+        group_min_osztondijindex,
         on='GroupIndex',
         how='left'
     )
