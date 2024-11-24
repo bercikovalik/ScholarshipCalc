@@ -146,7 +146,7 @@ def process_files(scholarship_df, original_df):
     combined_df.insert(osztondij_dontes_idx + 1, 'Ösztöndíj indoklás', combined_df.pop('Ösztöndíj indoklás'))
 
     negy_havi_osztondij_idx = combined_df.columns.get_loc('Scholarship Amount') + 1
-    combined_df.insert(negy_havi_osztondij_idx, '4 havi Ösztöndíj', combined_df['Scholarship Amount'] * 4)
+    combined_df.insert(negy_havi_osztondij_idx, '4 havi Ösztöndíj', combined_df['Scholarship Amount'] * 5)
 
     combined_df = combined_df.rename(columns={'Scholarship Amount' : '1 havi Ösztöndíj'})
 
