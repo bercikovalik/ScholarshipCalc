@@ -119,7 +119,7 @@ def visualize_distribution(recipients):
     st.pyplot(plt)
 
 def export_data_to_excel(data_to_export, required_columns):
-    export_columns = required_columns + ['Scholarship Amount', 'Group Minimum KÖDI']
+    export_columns = required_columns + ['Scholarship Amount', 'Group Minimum Ösztöndíjindex']
 
     data_to_export = data_to_export[export_columns]
 
@@ -215,7 +215,7 @@ def main():
         how='left'
     )
     all_students_data['Scholarship Amount'] = all_students_data['Scholarship Amount'].fillna('')
-    all_students_data['Group Minimum KÖDI'] = all_students_data['Group Minimum KÖDI'].fillna('')
+    all_students_data['Group Minimum Ösztöndíjindex'] = all_students_data['Group Minimum Ösztöndíjindex'].fillna('')
 
     st.header("Results")
     if st.button("Export All Students to Excel"):
