@@ -119,9 +119,9 @@ def process_files(scholarship_df, original_df):
     combined_df.insert(jogosultsag_indoklas_idx + 1, 'Ösztöndíj döntés',
                        conditions_met2.map({True: 'Jogosult', False: 'Nem Jogosult'}))
 
-    combined_df['Group Minimum KÖDI'] = pd.to_numeric(combined_df['Group Minimum KÖDI'],
+    combined_df['Group Minimum Ösztöndíjindex'] = pd.to_numeric(combined_df['Group Minimum Ösztöndíjindex'],
                                                                errors='coerce')
-    combined_df['KÖDI'] = pd.to_numeric(combined_df['KÖDI'], errors='coerce')
+    combined_df['Ösztöndíjindex'] = pd.to_numeric(combined_df['Ösztöndíjindex'], errors='coerce')
 
     def determine_osztondij_indoklas(row):
         if pd.isna(row['Hallgató kérvény azonosító']):
@@ -132,7 +132,7 @@ def process_files(scholarship_df, original_df):
             return 'Nem érte el a minimum átlagot'
         elif row['ElőzőFélévTeljesítettKredit'] < 23:
             return 'Nem érte el a minimum kreditet'
-        elif row['Group Minimum KÖDI'] > row['KÖDI']:
+        elif row['Group Minimum Ösztöndíjindex'] > row['Ösztöndíjindex']:
             return 'Nem érte el a csoport minimum átlagát'
         else:
             return 'Egyéb ok'
