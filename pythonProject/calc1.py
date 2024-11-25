@@ -155,18 +155,12 @@ def main():
     else:
         st.stop()
 
-    if 'Tagozat' not in data.columns:
-        st.error("The column 'Képzési szint' is missing from the data.")
-        st.write("Available columns in main data:", data.columns.tolist())
-        return data
-
-
     display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév',
                                            'KÖDI', 'Scholarship Amount',]
 
     required_columns = ['GroupIndex', 'KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név',
                         'Felvétel féléve', 'Aktív félévek', 'Státusz2 jelen félév',
-                        'Ösztöndíj átlag előző félév', 'Képzési szint_x', 'Nyelv ID', 'Tagozat',
+                        'Ösztöndíj átlag előző félév', 'Képzési szint', 'Nyelv ID', 'Tagozat',
                         'ElőzőFélévTeljesítettKredit', 'Hallgató kérvény azonosító', 'Évfolyam',
                         'Kredit szám', 'Ösztöndíjindex', 'KÖDI', 'Exceed Limit']
 

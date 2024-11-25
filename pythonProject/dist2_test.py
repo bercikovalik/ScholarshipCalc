@@ -34,6 +34,13 @@ def highlight_exceeded_semesters(main_data, small_groups_data, semester_limits):
     main_data['Exceed Limit'] = main_data['Aktív félévek'] > main_data['Adjusted Félévszám']
     small_groups_data['Exceed Limit'] = small_groups_data['Aktív félévek'] > small_groups_data['Adjusted Félévszám']
 
+    columns_to_drop = ['Képzéskód', 'Félévszám', 'Képzés neve', 'Képzési szint_y', 'Tagozat_y', 'FIR-be felad', 'Nyelv', 'Szükséges kredit',
+                       'Létrehozás ideje', 'Utolsó módosítás ideje', 'Létrehozó', 'Utolsó módosító', 'Archivált',
+                       'Szervezeti egység kódja']
+    main_data = main_data.drop(columns=[col for col in columns_to_drop if col in main_data.columns])
+    small_groups_data = small_groups_data.drop(
+        columns=[col for col in columns_to_drop if col in small_groups_data.columns])
+
     return main_data, small_groups_data
 
 
