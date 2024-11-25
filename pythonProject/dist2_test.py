@@ -266,10 +266,10 @@ def main():
 
     st.title("Student Grouping")
     st.subheader("Upload an input file where 3,8 and 23 are filtered")
-    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
+    uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx", key="main_file_upload")
 
     st.subheader("Upload max number of semesters file")
-    uploaded_file2 = st.file_uploader("Choose an Excel file", type="xlsx")
+    uploaded_file2 = st.file_uploader("Choose an Excel file", type="xlsx", key="semester_limit_file_upload")
 
     # Itt tartok, félév check jön
 
