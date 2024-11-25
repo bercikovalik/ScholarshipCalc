@@ -155,10 +155,10 @@ def main():
     else:
         st.stop()
 
-    if 'Tagozat' not in uploaded_file.columns:
+    if 'Tagozat' not in data.columns:
         st.error("The column 'Képzési szint' is missing from the data.")
-        st.write("Available columns in main data:", uploaded_file.columns.tolist())
-        return uploaded_file
+        st.write("Available columns in main data:", data.columns.tolist())
+        return data
 
 
     display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév',
