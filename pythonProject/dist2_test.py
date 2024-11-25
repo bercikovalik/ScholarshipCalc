@@ -18,7 +18,6 @@ def check_duplicate_neptun_codes(data):
         print("No duplicate Neptun kód found.")
 
 def highlight_exceeded_semesters(main_data, small_groups_data, semester_limits):
-    # Merge the semester limits with the main data
     main_data = pd.merge(main_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
     small_groups_data = pd.merge(small_groups_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
 
@@ -27,11 +26,11 @@ def highlight_exceeded_semesters(main_data, small_groups_data, semester_limits):
         st.write("Available columns in main data:", main_data.columns.tolist())
         st.write("Available columns in small groups data:", small_groups_data.columns.tolist())
         return main_data, small_groups_data
-    # Add additional semesters for "alapképzés" and "mesterképzés"
-    main_data['Adjusted Félévszám'] = main_data['Félévszám'] + main_data['Képzési szint'].map({'alapképzés': 1, 'mesterképzés': 2}).fillna(0)
-    small_groups_data['Adjusted Félévszám'] = small_groups_data['Félévszám'] + small_groups_data['Képzési szint'].map({'alapképzés': 1, 'mesterképzés': 2}).fillna(0)
+    main_data['Adjusted Félévszám'] = main_data['Félévszám'] + main_data['Képzési szint_x'].map(
+        {'alapképzés (BA/BSc/BProf)': 1, 'mesterképzés (MA/MSc)': 1, 'egységes, osztatlan képzés': 2}).fillna(0)
+    small_groups_data['Adjusted Félévszám'] = small_groups_data['Félévszám'] + small_groups_data['Képzési szint_x'].map(
+        {'alapképzés (BA/BSc/BProf)': 1, 'mesterképzés (MA/MSc)': 1, 'egységes, osztatlan képzés': 2}).fillna(0)
 
-    # Identify students exceeding the semester limits
     main_data['Exceed Limit'] = main_data['Aktív félévek'] > main_data['Adjusted Félévszám']
     small_groups_data['Exceed Limit'] = small_groups_data['Aktív félévek'] > small_groups_data['Adjusted Félévszám']
 
