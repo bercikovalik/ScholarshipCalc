@@ -21,7 +21,7 @@ def highlight_exceeded_semesters(main_data, small_groups_data, semester_limits):
     main_data = pd.merge(main_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
     small_groups_data = pd.merge(small_groups_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
 
-    if 'Képzési szint' not in main_data.columns or 'Képzési szint' not in small_groups_data.columns:
+    if 'Képzési szint_x' not in main_data.columns or 'Képzési szint_x' not in small_groups_data.columns:
         st.error("The column 'Képzési szint' is missing from the data.")
         st.write("Available columns in main data:", main_data.columns.tolist())
         st.write("Available columns in small groups data:", small_groups_data.columns.tolist())
