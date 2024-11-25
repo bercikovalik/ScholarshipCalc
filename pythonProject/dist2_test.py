@@ -166,7 +166,7 @@ def save_to_excel(main_data, separate_data):
 def apply_alternate_row_coloring(writer, df, sheet_name):
     workbook = writer.book
     worksheet = writer.sheets[sheet_name]
-    grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
+    grouping_columns = ['KépzésNév', 'Képzési szint_x', 'Nyelv ID', 'Évfolyam']
     df['TempGroupID'] = df[grouping_columns].apply(lambda x: ' | '.join(x.astype(str)), axis=1)
     last_row = df.shape[0] + 1
     last_col = df.shape[1]
