@@ -156,11 +156,11 @@ def main():
         st.stop()
 
     display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév',
-                                           'KÖDI', 'Scholarship Amount',]
+                                           'KÖDI', 'Scholarship Amount']
 
     required_columns = ['GroupIndex', 'KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név',
                         'Felvétel féléve', 'Aktív félévek', 'Státusz2 jelen félév',
-                        'Ösztöndíj átlag előző félév', 'Képzési szint', 'Nyelv ID', 'Tagozat',
+                        'Ösztöndíj átlag előző félév', 'Képzési szint_x', 'Nyelv ID', 'Tagozat_x',
                         'ElőzőFélévTeljesítettKredit', 'Hallgató kérvény azonosító', 'Évfolyam',
                         'Kredit szám', 'Ösztöndíjindex', 'KÖDI', 'Exceed Limit']
 
