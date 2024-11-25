@@ -21,14 +21,9 @@ def highlight_exceeded_semesters(main_data, small_groups_data, semester_limits):
     main_data = pd.merge(main_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
     small_groups_data = pd.merge(small_groups_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
 
-    if 'Képzési szint_x' not in main_data.columns or 'Képzési szint_x' not in small_groups_data.columns:
-        st.error("The column 'Képzési szint' is missing from the data.")
-        st.write("Available columns in main data:", main_data.columns.tolist())
-        st.write("Available columns in small groups data:", small_groups_data.columns.tolist())
-        return main_data, small_groups_data
-    main_data['Adjusted Félévszám'] = main_data['Félévszám'] + main_data['Képzési szint_x'].map(
+    main_data['Adjusted Félévszám'] = main_data['Félévszám'] + main_data['Képzési szint'].map(
         {'alapképzés (BA/BSc/BProf)': 1, 'mesterképzés (MA/MSc)': 1, 'egységes, osztatlan képzés': 2}).fillna(0)
-    small_groups_data['Adjusted Félévszám'] = small_groups_data['Félévszám'] + small_groups_data['Képzési szint_x'].map(
+    small_groups_data['Adjusted Félévszám'] = small_groups_data['Félévszám'] + small_groups_data['Képzési szint'].map(
         {'alapképzés (BA/BSc/BProf)': 1, 'mesterképzés (MA/MSc)': 1, 'egységes, osztatlan képzés': 2}).fillna(0)
 
     main_data['Exceed Limit'] = main_data['Aktív félévek'] > main_data['Adjusted Félévszám']
