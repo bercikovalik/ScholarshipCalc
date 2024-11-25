@@ -17,6 +17,22 @@ def check_duplicate_neptun_codes(data):
     else:
         print("No duplicate Neptun kód found.")
 
+def highlight_exceeded_semesters(main_data, small_groups_data, semester_limits):
+    # Merge the semester limits with the main data
+    main_data = pd.merge(main_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
+    small_groups_data = pd.merge(small_groups_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
+
+    # Add additional semesters for "alapképzés" and "mesterképzés"
+    main_data['Adjusted Félévszám'] = main_data['Félévszám'] + main_data['Képzési szint'].map({'alapképzés': 1, 'mesterképzés': 2}).fillna(0)
+    small_groups_data['Adjusted Félévszám'] = small_groups_data['Félévszám'] + small_groups_data['Képzési szint'].map({'alapképzés': 1, 'mesterképzés': 2}).fillna(0)
+
+    # Identify students exceeding the semester limits
+    main_data['Exceed Limit'] = main_data['Aktív félévek'] > main_data['Adjusted Félévszám']
+    small_groups_data['Exceed Limit'] = small_groups_data['Aktív félévek'] > small_groups_data['Adjusted Félévszám']
+
+    return main_data, small_groups_data
+
+
 def group_students(data):
     bins = [0, 2, 4, 6, 8, 10, 12]
     labels = ['1. éves', '2. éves', '3. éves', '4. éves', '5. éves', '6. éves']
@@ -154,17 +170,26 @@ def apply_alternate_row_coloring(writer, df, sheet_name):
     fill_colors = ['FFFFFF', 'D3D3D3']
     current_fill = 0
     previous_group = None
+    red_fill = PatternFill(start_color='FF0000', end_color='FF0000', fill_type='solid')
 
     for row in range(2, last_row + 1):
         group_id = df.iloc[row - 2]['TempGroupID']
-        if group_id != previous_group:
-            current_fill = (current_fill + 1) % len(fill_colors)
-            previous_group = group_id
+        exceed_limit = df.iloc[row - 2]['Exceed Limit'] if 'Exceed Limit' in df.columns else False
 
-        fill = PatternFill(start_color=fill_colors[current_fill], end_color=fill_colors[current_fill], fill_type='solid')
-        for col in range(1, last_col + 1):
-            cell = worksheet.cell(row=row, column=col)
-            cell.fill = fill
+        if exceed_limit:
+            for col in range(1, last_col + 1):
+                cell = worksheet.cell(row=row, column=col)
+                cell.fill = red_fill
+        else:
+            if group_id != previous_group:
+                current_fill = (current_fill + 1) % len(fill_colors)
+                previous_group = group_id
+
+            fill = PatternFill(start_color=fill_colors[current_fill], end_color=fill_colors[current_fill],
+                               fill_type='solid')
+            for col in range(1, last_col + 1):
+                cell = worksheet.cell(row=row, column=col)
+                cell.fill = fill
 
     df.drop(columns=['TempGroupID'], inplace=True)
 
@@ -243,8 +268,14 @@ def main():
     st.subheader("Upload an input file where 3,8 and 23 are filtered")
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
 
-    if uploaded_file is not None:
+    st.subheader("Upload max number of semesters file")
+    uploaded_file2 = st.file_uploader("Choose an Excel file", type="xlsx")
+
+    # Itt tartok, félév check jön
+
+    if uploaded_file is not None and uploaded_file2 is not None:
         data = load_data(uploaded_file)
+        semester_limits = load_data(uploaded_file2)
     else:
         st.stop()
 
@@ -274,6 +305,9 @@ def main():
 
     updated_data = add_group_index(updated_data)
     small_groups_data_combined = add_group_index(small_groups_data_combined)
+
+    updated_data, small_groups_data_combined = highlight_exceeded_semesters(updated_data, small_groups_data_combined,
+                                                                            semester_limits)
 
     main_buffer, separate_buffer = save_to_excel(updated_data, small_groups_data_combined)
 
