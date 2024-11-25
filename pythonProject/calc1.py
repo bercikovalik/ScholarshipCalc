@@ -161,7 +161,7 @@ def main():
 
     required_columns = ['GroupIndex', 'KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név',
                         'Felvétel féléve', 'Aktív félévek', 'Státusz2 jelen félév',
-                        'Ösztöndíj átlag előző félév', 'Képzési szint', 'Nyelv ID', 'Tagozat',
+                        'Ösztöndíj átlag előző félév', 'Képzési szint_x', 'Nyelv ID', 'Tagozat',
                         'ElőzőFélévTeljesítettKredit', 'Hallgató kérvény azonosító', 'Évfolyam',
                         'Kredit szám', 'Ösztöndíjindex', 'KÖDI', 'Exceed Limit']
 
