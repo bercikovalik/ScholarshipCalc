@@ -243,7 +243,10 @@ def main():
             unsafe_allow_html=True
         )
 
+    submitted_data_kerveny_num = len(submitted_data_kerveny)
+    kerveny_percentage = (submitted_data_kerveny_num / total_students) * 100
     st.write(f"**Total Percentage of Students Receiving Scholarships:** {total_percentage_students:.2f}%")
+    st.write(f"Total Number of students who submitted request: {submitted_data_kerveny_num} out of {total_students}. Percentage: {kerveny_percentage:.2f}%")
 
     st.subheader("KÖDI vs. Scholarship Amount")
     visualize_distribution(recipients)
@@ -254,7 +257,7 @@ def main():
 
         group_recipients = recipients[recipients['GroupIndex'] == group]
         num_recipients_in_group = len(group_recipients)
-        actual_percentage = num_recipients_in_group/num_students_in_group_all
+        actual_percentage = (num_recipients_in_group / num_students_in_group_all) * 100
         if not group_recipients.empty:
             st.markdown(
                 f"### Group {group} (Total Students: {num_students_in_group_all}, Recipients: {num_recipients_in_group}, Actual percentage: {actual_percentage:.2f}%)")
