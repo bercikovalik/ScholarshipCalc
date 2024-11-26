@@ -42,62 +42,63 @@ def get_group_percentages(groups):
     return group_percentages_decimal
 
 
-def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0):
+def calculate_scholarship_amounts_global(submitted_data, all_data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0):
     global all_recipients
     recipients_list = []
-    total_students = len(data)
+    total_students = len(all_data)
     total_recipients = 0
     group_min_kodi_dict = {}
     group_min_index_dict = {}
 
-    for group in data['GroupIndex'].unique():
-        group_data = data[data['GroupIndex'] == group].copy()
-        st.write(f"Debug: Group {group} - Total Students Retrieved = {len(group_data)}")
-        num_students_in_group = len(group_data)
+    for group in all_data['GroupIndex'].unique():
+        all_group_data = all_data[all_data['GroupIndex'] == group].copy()
+        st.write(f"Debug: Group {group} - Total Students Retrieved = {len(all_group_data)}")
+        group_submitted_data = submitted_data[submitted_data['GroupIndex'] == group].copy()
 
+        num_students_in_group = len(all_group_data)
         group_percentage = group_percentages.get(group, 0.3)
-        # Calculate the exact number of recipients based on the percentage (round up)
-        num_recipients = int(np.ceil(group_percentage * num_students_in_group))
 
         # Sort group data by KÖDI descending (so higher KÖDI means higher priority)
-        group_data = group_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
+        num_recipients = int(np.ceil(group_percentage * num_students_in_group))
+
+        # Sort the submitted group data by KÖDI descending (so higher KÖDI means higher priority)
+        group_submitted_data = group_submitted_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
 
         # Select the initial set of recipients based on the percentage
-        initial_recipients = group_data.iloc[:num_recipients].copy()
+        initial_recipients = group_submitted_data.iloc[:num_recipients].copy()
 
         # Determine the KÖDI value of the last recipient in the initial selection
-        last_included_KODI = initial_recipients['KÖDI'].iloc[-1]
+        if not initial_recipients.empty:
+            last_included_KODI = initial_recipients['KÖDI'].iloc[-1]
 
-        # Include all additional recipients who have the same KÖDI as the last included student
-        additional_recipients = group_data[
-            (group_data['KÖDI'] == last_included_KODI) & (group_data.index >= num_recipients)]
+            # Include all additional recipients who have the same KÖDI as the last included student
+            additional_recipients = group_submitted_data[
+                (group_submitted_data['KÖDI'] == last_included_KODI) & (group_submitted_data.index >= num_recipients)]
 
+            # Combine initial recipients with any additional recipients
+            all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates(
+                subset=['Neptun kód'])
 
-        # Combine initial recipients with any additional recipients
-        all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates(
-            subset=['Neptun kód'])
+            # Ensure that at least `num_recipients` students are selected
+            if len(all_recipients_group) < num_recipients:
+                # If not enough students, select additional students until we have `num_recipients`
+                remaining_students = group_submitted_data.loc[
+                    ~group_submitted_data['Neptun kód'].isin(all_recipients_group['Neptun kód'])]
+                num_needed = num_recipients - len(all_recipients_group)
+                additional_needed = remaining_students.iloc[:num_needed]
+                all_recipients_group = pd.concat([all_recipients_group, additional_needed])
 
-        # Ensure that at least `num_recipients` students are selected
-        if len(all_recipients_group) < num_recipients:
-            # If not enough students, select additional students until we have `num_recipients`
-            remaining_students = group_data.loc[~group_data['Neptun kód'].isin(all_recipients_group['Neptun kód'])]
-            num_needed = num_recipients - len(all_recipients_group)
-            additional_needed = remaining_students.iloc[:num_needed]
-            all_recipients_group = pd.concat([all_recipients_group, additional_needed])
+            # Update the actual number of recipients based on the full list
+            num_recipients_actual = len(all_recipients_group)
+            total_recipients += num_recipients_actual
 
+            # Store the minimum KÖDI and corresponding Ösztöndíjindex for each group
+            group_min_kodi_dict[group] = last_included_KODI
+            group_min_index_dict[group] = all_recipients_group['Ösztöndíjindex'].min()
 
-        # Update the actual number of recipients based on the full list
-        num_recipients_actual = len(all_recipients_group)
-        total_recipients += num_recipients_actual
-
-
-        # Store the minimum KÖDI and corresponding Ösztöndíjindex for each group
-        group_min_kodi_dict[group] = last_included_KODI
-        group_min_index_dict[group] = all_recipients_group['Ösztöndíjindex'].min()
-
-        # Add Group Minimum Ösztöndíjindex information to recipients group
-        all_recipients_group['Group Minimum Ösztöndíjindex'] = all_recipients_group['Ösztöndíjindex'].min()
-        recipients_list.append(all_recipients_group)
+            # Add Group Minimum Ösztöndíjindex information to recipients group
+            all_recipients_group['Group Minimum Ösztöndíjindex'] = all_recipients_group['Ösztöndíjindex'].min()
+            recipients_list.append(all_recipients_group)
 
         # Combine all recipients from all groups
     all_recipients = pd.concat(recipients_list, ignore_index=True)
@@ -109,13 +110,10 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     KODI_normalized = (all_recipients['KÖDI'] - KODI_cutoff_global) / (100 - KODI_cutoff_global + epsilon)
     KODI_normalized = np.clip(KODI_normalized, 0, 1)
 
-
     f_K = 1 / (1 + np.exp(-k * (KODI_normalized - x0)))
 
     all_recipients['Scholarship Amount'] = min_amount_per_group + f_K * (max_amount_per_group - min_amount_per_group)
-
     all_recipients.loc[all_recipients['KÖDI'] == 100, 'Scholarship Amount'] = max_amount_per_group
-
     all_recipients['Scholarship Amount'] = (all_recipients['Scholarship Amount'] / 100).round() * 100
 
     cols = all_recipients.columns.tolist()
@@ -129,11 +127,11 @@ def calculate_total_allocated_funds(recipients):
     total_allocated = recipients['Scholarship Amount'].sum()
     return total_allocated
 
-def objective_function_global(data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0, total_fund):
-    recipients, _, _, _ = calculate_scholarship_amounts_global(
-         data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
-    total_allocated = calculate_total_allocated_funds(recipients)
-    return abs(total_fund - total_allocated)
+#def objective_function_global(data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0, total_fund):
+   # recipients, _, _, _ = calculate_scholarship_amounts_global(
+        # data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
+    #total_allocated = calculate_total_allocated_funds(recipients)
+   # return abs(total_fund - total_allocated)
 
 def visualize_distribution(recipients):
     plt.figure(figsize=(10, 6))
@@ -227,7 +225,7 @@ def main():
     x0 = st.number_input("Parameter x₀ (midpoint of the curve)", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
 
     recipients, total_recipients, total_students, group_min_kodi_dict= calculate_scholarship_amounts_global(
-        submitted_data_kerveny, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
+        submitted_data_kerveny, submitted_data_all, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
 
     total_allocated = calculate_total_allocated_funds(recipients)
 
