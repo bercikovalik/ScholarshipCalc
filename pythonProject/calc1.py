@@ -192,12 +192,15 @@ def main():
             st.error(f"Error: Column '{col}' not found in data.")
             return
 
-    submitted_data = data.copy()
-    #data['Hallgató kérvény azonosító'].notnull() & (data['Hallgató kérvény azonosító'] != '')
-    submitted_data['GroupIndex'] = submitted_data['GroupIndex'].astype(int)
-    data['GroupIndex'] = data['GroupIndex'].astype(int)
+    submitted_data_all = data.copy()
+    submitted_data_kerveny = data[
+        data['Hallgató kérvény azonosító'].notnull() & (data['Hallgató kérvény azonosító'] != '')].copy()
 
-    groups = sorted(submitted_data['GroupIndex'].unique())
+    #data['Hallgató kérvény azonosító'].notnull() & (data['Hallgató kérvény azonosító'] != '')
+    submitted_data_all['GroupIndex'] = submitted_data_all['GroupIndex'].astype(int)
+    submitted_data_kerveny['GroupIndex'] = submitted_data_kerveny['GroupIndex'].astype(int)
+
+    groups = sorted(submitted_data_all['GroupIndex'].unique())
 
     if 'group_percentages' not in st.session_state:
         st.session_state.group_percentages = {group: 30 for group in groups}
@@ -210,12 +213,12 @@ def main():
 
     group_percentages = get_group_percentages(groups)
 
-    total_students = len(data)
+    total_students = len(submitted_data_all)
     total_recipients_estimated = 0
     for group in groups:
-        num_students_in_group = len(submitted_data[submitted_data['GroupIndex'] == group])
+        num_students_in_group_all = len(submitted_data_all[submitted_data_all['GroupIndex'] == group])
         group_percentage = group_percentages.get(group, 0.3)
-        num_recipients = int(np.ceil(group_percentage * num_students_in_group))
+        num_recipients = int(np.ceil(group_percentage * num_students_in_group_all))
         total_recipients_estimated += num_recipients
     total_percentage_students = (total_recipients_estimated / total_students) * 100
 
@@ -224,7 +227,7 @@ def main():
     x0 = st.number_input("Parameter x₀ (midpoint of the curve)", min_value=0.0, max_value=1.0, value=0.5, step=0.01)
 
     recipients, total_recipients, total_students, group_min_kodi_dict= calculate_scholarship_amounts_global(
-        submitted_data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
+        submitted_data_kerveny, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
 
     total_allocated = calculate_total_allocated_funds(recipients)
 
@@ -268,13 +271,13 @@ def main():
 
     st.subheader("Scholarship Recipients by Group")
     for group in groups:
-        num_students_in_group = len(data[data['GroupIndex'] == group])
+        num_students_in_group_all = len(data[data['GroupIndex'] == group])
 
         group_recipients = recipients[recipients['GroupIndex'] == group]
         num_recipients_in_group = len(group_recipients)
         if not group_recipients.empty:
             st.markdown(
-                f"### Group {group} (Total Students: {num_students_in_group}, Recipients: {num_recipients_in_group})")
+                f"### Group {group} (Total Students: {num_students_in_group_all}, Recipients: {num_recipients_in_group})")
             st.dataframe(group_recipients[display_columns])
 
 
