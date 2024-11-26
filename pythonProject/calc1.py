@@ -54,58 +54,71 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
         group_data = data[data['GroupIndex'] == group].copy()
         num_students_in_group = len(group_data)
         group_percentage = group_percentages.get(group, 0.3)
+        # Calculate the exact number of recipients based on the percentage (round up)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group))
 
+        # Debugging Output
+        print(f"Group {group}: Total Students = {num_students_in_group}, Required Recipients = {num_recipients}")
+
+        # Sort group data by KÖDI descending (so higher KÖDI means higher priority)
         group_data = group_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
 
+        # Select the initial set of recipients based on the percentage
         initial_recipients = group_data.iloc[:num_recipients].copy()
 
-        for group in data['GroupIndex'].unique():
-            group_data = data[data['GroupIndex'] == group].copy()
-            num_students_in_group = len(group_data)
-            group_percentage = group_percentages.get(group, 0.3)
-            # Calculate the exact number of recipients based on the percentage (round up)
-            num_recipients = int(np.ceil(group_percentage * num_students_in_group))
+        # Debugging Output
+        print(f"Group {group}: Initial Recipients Selected = {len(initial_recipients)}")
+        print(f"Group {group}: Initial Recipients - Last Included KÖDI = {initial_recipients['KÖDI'].iloc[-1]}")
 
-            # Sort group data by KÖDI descending (so higher KÖDI means higher priority)
-            group_data = group_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
+        # Determine the KÖDI value of the last recipient in the initial selection
+        last_included_KODI = initial_recipients['KÖDI'].iloc[-1]
 
-            # Select the initial set of recipients based on the percentage
-            initial_recipients = group_data.iloc[:num_recipients].copy()
+        # Include all additional recipients who have the same KÖDI as the last included student
+        additional_recipients = group_data[
+            (group_data['KÖDI'] == last_included_KODI) & (group_data.index >= num_recipients)]
 
-            # Determine the KÖDI value of the last recipient in the initial selection
-            last_included_KODI = initial_recipients['KÖDI'].iloc[-1]
+        # Debugging Output
+        print(f"Group {group}: Additional Recipients with Same KÖDI = {len(additional_recipients)}")
 
-            # Include all additional recipients who have the same KÖDI as the last included student
-            additional_recipients = group_data[
-                (group_data['KÖDI'] == last_included_KODI) & (group_data.index >= num_recipients)]
+        # Combine initial recipients with any additional recipients
+        all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates(
+            subset=['Neptun kód'])
 
-            # Combine initial recipients with any additional recipients
-            all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates(
-                subset=['Neptun kód'])
+        # Ensure that at least `num_recipients` students are selected
+        if len(all_recipients_group) < num_recipients:
+            # If not enough students, select additional students until we have `num_recipients`
+            remaining_students = group_data.loc[~group_data['Neptun kód'].isin(all_recipients_group['Neptun kód'])]
+            num_needed = num_recipients - len(all_recipients_group)
+            additional_needed = remaining_students.iloc[:num_needed]
+            all_recipients_group = pd.concat([all_recipients_group, additional_needed])
 
-            # Ensure that at least `num_recipients` students are selected
-            if len(all_recipients_group) < num_recipients:
-                # If not enough students, select additional students until we have `num_recipients`
-                remaining_students = group_data.loc[~group_data['Neptun kód'].isin(all_recipients_group['Neptun kód'])]
-                num_needed = num_recipients - len(all_recipients_group)
-                additional_needed = remaining_students.iloc[:num_needed]
-                all_recipients_group = pd.concat([all_recipients_group, additional_needed])
+            # Debugging Output
+            print(f"Group {group}: Added {num_needed} More Recipients to Meet Required Total")
 
-            # Update the actual number of recipients based on the full list
-            num_recipients_actual = len(all_recipients_group)
-            total_recipients += num_recipients_actual
+        # Update the actual number of recipients based on the full list
+        num_recipients_actual = len(all_recipients_group)
+        total_recipients += num_recipients_actual
 
-            # Store the minimum KÖDI and corresponding Ösztöndíjindex for each group
-            group_min_kodi_dict[group] = last_included_KODI
-            group_min_index_dict[group] = all_recipients_group['Ösztöndíjindex'].min()
+        # Debugging Output
+        print(f"Group {group}: Final Number of Recipients = {num_recipients_actual}")
+        print(
+            f"Group {group}: Final List of Recipients - Neptun Kód List = {all_recipients_group['Neptun kód'].tolist()}")
 
-            # Add Group Minimum Ösztöndíjindex information to recipients group
-            all_recipients_group['Group Minimum Ösztöndíjindex'] = all_recipients_group['Ösztöndíjindex'].min()
-            recipients_list.append(all_recipients_group)
+        # Store the minimum KÖDI and corresponding Ösztöndíjindex for each group
+        group_min_kodi_dict[group] = last_included_KODI
+        group_min_index_dict[group] = all_recipients_group['Ösztöndíjindex'].min()
 
+        # Add Group Minimum Ösztöndíjindex information to recipients group
+        all_recipients_group['Group Minimum Ösztöndíjindex'] = all_recipients_group['Ösztöndíjindex'].min()
+        recipients_list.append(all_recipients_group)
+
+        # Combine all recipients from all groups
     all_recipients = pd.concat(recipients_list, ignore_index=True)
     all_recipients.drop_duplicates(inplace=True)
+
+    # Debugging Output
+    print(f"Total Recipients Across All Groups = {len(all_recipients)}")
+
 
     KODI_cutoff_global = all_recipients['KÖDI'].min()
 
