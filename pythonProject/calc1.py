@@ -60,13 +60,27 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
 
         initial_recipients = group_data.iloc[:num_recipients].copy()
 
-        if not initial_recipients.empty:
-            # Identify the last included KÖDI value
+        for group in data['GroupIndex'].unique():
+            group_data = data[data['GroupIndex'] == group].copy()
+            num_students_in_group = len(group_data)
+            group_percentage = group_percentages.get(group, 0.3)
+            # Calculate the exact number of recipients based on the percentage
+            num_recipients = int(np.ceil(group_percentage * num_students_in_group))
+
+            # Sort the students in descending order by KÖDI (higher KÖDI first)
+            group_data = group_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
+
+            # Select the initial number of recipients based on the percentage
+            initial_recipients = group_data.iloc[:num_recipients].copy()
+
+            # Determine the KÖDI value of the last recipient in the initial selection
             last_included_KODI = initial_recipients['KÖDI'].iloc[-1]
-            # Select all additional students who have the same KÖDI value as the last included
+
+            # Add any additional recipients with the same KÖDI value as the last included recipient
             additional_recipients = group_data[
                 (group_data['KÖDI'] == last_included_KODI) & (group_data.index >= num_recipients)]
-            # Combine initial and additional recipients, keeping all of them
+
+            # Combine the initial and additional recipients, ensuring no duplicates
             all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates(
                 subset=['Neptun kód'])
 
@@ -83,9 +97,6 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
             # Add Group Minimum Ösztöndíjindex information to recipients group
             all_recipients_group['Group Minimum Ösztöndíjindex'] = all_recipients_group['Ösztöndíjindex'].min()
             recipients_list.append(all_recipients_group)
-        else:
-            group_min_kodi_dict[group] = np.nan
-            group_min_index_dict[group] = np.nan
 
     all_recipients = pd.concat(recipients_list, ignore_index=True)
     all_recipients.drop_duplicates(inplace=True)
