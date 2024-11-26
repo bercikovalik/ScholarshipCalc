@@ -52,7 +52,6 @@ def calculate_scholarship_amounts_global(submitted_data, all_data, max_amount_pe
 
     for group in all_data['GroupIndex'].unique():
         all_group_data = all_data[all_data['GroupIndex'] == group].copy()
-        st.write(f"Debug: Group {group} - Total Students Retrieved = {len(all_group_data)}")
         group_submitted_data = submitted_data[submitted_data['GroupIndex'] == group].copy()
 
         num_students_in_group = len(all_group_data)
