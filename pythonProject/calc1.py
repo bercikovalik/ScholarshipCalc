@@ -64,30 +64,36 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
             group_data = data[data['GroupIndex'] == group].copy()
             num_students_in_group = len(group_data)
             group_percentage = group_percentages.get(group, 0.3)
-            # Calculate the exact number of recipients based on the percentage
+            # Calculate the exact number of recipients based on the percentage (round up)
             num_recipients = int(np.ceil(group_percentage * num_students_in_group))
 
-            # Sort the students in descending order by KÖDI (higher KÖDI first)
+            # Sort group data by KÖDI descending (so higher KÖDI means higher priority)
             group_data = group_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
 
-            # Select the initial number of recipients based on the percentage
+            # Select the initial set of recipients based on the percentage
             initial_recipients = group_data.iloc[:num_recipients].copy()
 
             # Determine the KÖDI value of the last recipient in the initial selection
             last_included_KODI = initial_recipients['KÖDI'].iloc[-1]
 
-            # Add any additional recipients with the same KÖDI value as the last included recipient
+            # Include all additional recipients who have the same KÖDI as the last included student
             additional_recipients = group_data[
                 (group_data['KÖDI'] == last_included_KODI) & (group_data.index >= num_recipients)]
 
-            # Combine the initial and additional recipients, ensuring no duplicates
+            # Combine initial recipients with any additional recipients
             all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates(
                 subset=['Neptun kód'])
 
-            # Update the actual number of recipients based on the full list after considering additional recipients
-            num_recipients_actual = len(all_recipients_group)
+            # Ensure that at least `num_recipients` students are selected
+            if len(all_recipients_group) < num_recipients:
+                # If not enough students, select additional students until we have `num_recipients`
+                remaining_students = group_data.loc[~group_data['Neptun kód'].isin(all_recipients_group['Neptun kód'])]
+                num_needed = num_recipients - len(all_recipients_group)
+                additional_needed = remaining_students.iloc[:num_needed]
+                all_recipients_group = pd.concat([all_recipients_group, additional_needed])
 
-            # Update the total number of recipients
+            # Update the actual number of recipients based on the full list
+            num_recipients_actual = len(all_recipients_group)
             total_recipients += num_recipients_actual
 
             # Store the minimum KÖDI and corresponding Ösztöndíjindex for each group
