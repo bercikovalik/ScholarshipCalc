@@ -58,49 +58,37 @@ def calculate_scholarship_amounts_global(submitted_data, all_data, max_amount_pe
         num_students_in_group = len(all_group_data)
         group_percentage = group_percentages.get(group, 0.3)
 
-        # Sort group data by KÖDI descending (so higher KÖDI means higher priority)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group))
 
-        # Sort the submitted group data by KÖDI descending (so higher KÖDI means higher priority)
         group_submitted_data = group_submitted_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
 
-        # Select the initial set of recipients based on the percentage
         initial_recipients = group_submitted_data.iloc[:num_recipients].copy()
 
-        # Determine the KÖDI value of the last recipient in the initial selection
         if not initial_recipients.empty:
             last_included_KODI = initial_recipients['KÖDI'].iloc[-1]
 
-            # Include all additional recipients who have the same KÖDI as the last included student
             additional_recipients = group_submitted_data[
                 (group_submitted_data['KÖDI'] == last_included_KODI) & (group_submitted_data.index >= num_recipients)]
 
-            # Combine initial recipients with any additional recipients
             all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates(
                 subset=['Neptun kód'])
 
-            # Ensure that at least `num_recipients` students are selected
             if len(all_recipients_group) < num_recipients:
-                # If not enough students, select additional students until we have `num_recipients`
                 remaining_students = group_submitted_data.loc[
                     ~group_submitted_data['Neptun kód'].isin(all_recipients_group['Neptun kód'])]
                 num_needed = num_recipients - len(all_recipients_group)
                 additional_needed = remaining_students.iloc[:num_needed]
                 all_recipients_group = pd.concat([all_recipients_group, additional_needed])
 
-            # Update the actual number of recipients based on the full list
             num_recipients_actual = len(all_recipients_group)
             total_recipients += num_recipients_actual
 
-            # Store the minimum KÖDI and corresponding Ösztöndíjindex for each group
             group_min_kodi_dict[group] = last_included_KODI
             group_min_index_dict[group] = all_recipients_group['Ösztöndíjindex'].min()
 
-            # Add Group Minimum Ösztöndíjindex information to recipients group
             all_recipients_group['Group Minimum Ösztöndíjindex'] = all_recipients_group['Ösztöndíjindex'].min()
             recipients_list.append(all_recipients_group)
 
-        # Combine all recipients from all groups
     all_recipients = pd.concat(recipients_list, ignore_index=True)
     all_recipients.drop_duplicates(inplace=True)
 
@@ -126,12 +114,6 @@ def calculate_scholarship_amounts_global(submitted_data, all_data, max_amount_pe
 def calculate_total_allocated_funds(recipients):
     total_allocated = recipients['Scholarship Amount'].sum()
     return total_allocated
-
-#def objective_function_global(data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0, total_fund):
-   # recipients, _, _, _ = calculate_scholarship_amounts_global(
-        # data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0)
-    #total_allocated = calculate_total_allocated_funds(recipients)
-   # return abs(total_fund - total_allocated)
 
 def visualize_distribution(recipients):
     plt.figure(figsize=(10, 6))
@@ -194,7 +176,6 @@ def main():
     submitted_data_kerveny = data[
         data['Hallgató kérvény azonosító'].notnull() & (data['Hallgató kérvény azonosító'] != '')].copy()
 
-    #data['Hallgató kérvény azonosító'].notnull() & (data['Hallgató kérvény azonosító'] != '')
     submitted_data_all['GroupIndex'] = submitted_data_all['GroupIndex'].astype(int)
     submitted_data_kerveny['GroupIndex'] = submitted_data_kerveny['GroupIndex'].astype(int)
 
@@ -273,9 +254,10 @@ def main():
 
         group_recipients = recipients[recipients['GroupIndex'] == group]
         num_recipients_in_group = len(group_recipients)
+        actual_percentage = num_recipients_in_group/num_students_in_group_all
         if not group_recipients.empty:
             st.markdown(
-                f"### Group {group} (Total Students: {num_students_in_group_all}, Recipients: {num_recipients_in_group})")
+                f"### Group {group} (Total Students: {num_students_in_group_all}, Recipients: {num_recipients_in_group}, Actual percentage: {actual_percentage})")
             st.dataframe(group_recipients[display_columns])
 
 
