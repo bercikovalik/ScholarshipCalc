@@ -192,9 +192,8 @@ def main():
             st.error(f"Error: Column '{col}' not found in data.")
             return
 
-    submitted_data = data[
-        data['Hallgató kérvény azonosító'].notnull() & (data['Hallgató kérvény azonosító'] != '')].copy()
-
+    submitted_data = data.copy()
+    #data['Hallgató kérvény azonosító'].notnull() & (data['Hallgató kérvény azonosító'] != '')
     submitted_data['GroupIndex'] = submitted_data['GroupIndex'].astype(int)
     data['GroupIndex'] = data['GroupIndex'].astype(int)
 
