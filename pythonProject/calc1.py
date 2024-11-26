@@ -257,7 +257,7 @@ def main():
         actual_percentage = num_recipients_in_group/num_students_in_group_all
         if not group_recipients.empty:
             st.markdown(
-                f"### Group {group} (Total Students: {num_students_in_group_all}, Recipients: {num_recipients_in_group}, Actual percentage: {actual_percentage})")
+                f"### Group {group} (Total Students: {num_students_in_group_all}, Recipients: {num_recipients_in_group}, Actual percentage: {actual_percentage:.2f}%)")
             st.dataframe(group_recipients[display_columns])
 
 
