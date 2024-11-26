@@ -53,6 +53,14 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
     for group in data['GroupIndex'].unique():
         group_data = data[data['GroupIndex'] == group].copy()
         num_students_in_group = len(group_data)
+
+        for group in data['GroupIndex'].unique():
+            group_data = data[data['GroupIndex'] == group].copy()
+
+            # Debugging Output: Number of Students in Group Before Any Filtering
+            print(f"Debug: Group {group} - Total Students Retrieved = {len(group_data)}")
+
+            num_students_in_group = len(group_data)
         group_percentage = group_percentages.get(group, 0.3)
         # Calculate the exact number of recipients based on the percentage (round up)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group))
@@ -66,10 +74,6 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
         # Select the initial set of recipients based on the percentage
         initial_recipients = group_data.iloc[:num_recipients].copy()
 
-        # Debugging Output
-        print(f"Group {group}: Initial Recipients Selected = {len(initial_recipients)}")
-        print(f"Group {group}: Initial Recipients - Last Included KÖDI = {initial_recipients['KÖDI'].iloc[-1]}")
-
         # Determine the KÖDI value of the last recipient in the initial selection
         last_included_KODI = initial_recipients['KÖDI'].iloc[-1]
 
@@ -77,8 +81,6 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
         additional_recipients = group_data[
             (group_data['KÖDI'] == last_included_KODI) & (group_data.index >= num_recipients)]
 
-        # Debugging Output
-        print(f"Group {group}: Additional Recipients with Same KÖDI = {len(additional_recipients)}")
 
         # Combine initial recipients with any additional recipients
         all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates(
@@ -92,17 +94,11 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
             additional_needed = remaining_students.iloc[:num_needed]
             all_recipients_group = pd.concat([all_recipients_group, additional_needed])
 
-            # Debugging Output
-            print(f"Group {group}: Added {num_needed} More Recipients to Meet Required Total")
 
         # Update the actual number of recipients based on the full list
         num_recipients_actual = len(all_recipients_group)
         total_recipients += num_recipients_actual
 
-        # Debugging Output
-        print(f"Group {group}: Final Number of Recipients = {num_recipients_actual}")
-        print(
-            f"Group {group}: Final List of Recipients - Neptun Kód List = {all_recipients_group['Neptun kód'].tolist()}")
 
         # Store the minimum KÖDI and corresponding Ösztöndíjindex for each group
         group_min_kodi_dict[group] = last_included_KODI
@@ -115,10 +111,6 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
         # Combine all recipients from all groups
     all_recipients = pd.concat(recipients_list, ignore_index=True)
     all_recipients.drop_duplicates(inplace=True)
-
-    # Debugging Output
-    print(f"Total Recipients Across All Groups = {len(all_recipients)}")
-
 
     KODI_cutoff_global = all_recipients['KÖDI'].min()
 
