@@ -52,15 +52,10 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
 
     for group in data['GroupIndex'].unique():
         group_data = data[data['GroupIndex'] == group].copy()
+        print(f"Debug: Group {group} - Total Students Retrieved = {len(group_data)}")
+
         num_students_in_group = len(group_data)
 
-        for group in data['GroupIndex'].unique():
-            group_data = data[data['GroupIndex'] == group].copy()
-
-            # Debugging Output: Number of Students in Group Before Any Filtering
-            print(f"Debug: Group {group} - Total Students Retrieved = {len(group_data)}")
-
-            num_students_in_group = len(group_data)
         group_percentage = group_percentages.get(group, 0.3)
         # Calculate the exact number of recipients based on the percentage (round up)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group))
