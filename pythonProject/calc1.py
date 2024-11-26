@@ -246,7 +246,7 @@ def main():
     submitted_data_kerveny_num = len(submitted_data_kerveny)
     kerveny_percentage = (submitted_data_kerveny_num / total_students) * 100
     st.write(f"**Total Percentage of Students Receiving Scholarships:** {total_percentage_students:.2f}%")
-    st.write(f"Total Number of students who submitted request: {submitted_data_kerveny_num} out of {total_students}. Percentage: {kerveny_percentage:.2f}%")
+    st.write(f"Total Number of students who submitted request: **{submitted_data_kerveny_num}** out of **{total_students}**. Percentage: **{kerveny_percentage:.2f**}%")
 
     st.subheader("KÖDI vs. Scholarship Amount")
     visualize_distribution(recipients)
