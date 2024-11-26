@@ -52,8 +52,7 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
 
     for group in data['GroupIndex'].unique():
         group_data = data[data['GroupIndex'] == group].copy()
-        print(f"Debug: Group {group} - Total Students Retrieved = {len(group_data)}")
-
+        st.write(f"Debug: Group {group} - Total Students Retrieved = {len(group_data)}")
         num_students_in_group = len(group_data)
 
         group_percentage = group_percentages.get(group, 0.3)
