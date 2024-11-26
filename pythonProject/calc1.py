@@ -60,9 +60,6 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
         # Calculate the exact number of recipients based on the percentage (round up)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group))
 
-        # Debugging Output
-        print(f"Group {group}: Total Students = {num_students_in_group}, Required Recipients = {num_recipients}")
-
         # Sort group data by KÖDI descending (so higher KÖDI means higher priority)
         group_data = group_data.sort_values(by='KÖDI', ascending=False).reset_index(drop=True)
 
