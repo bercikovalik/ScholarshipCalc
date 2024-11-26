@@ -61,17 +61,27 @@ def calculate_scholarship_amounts_global(data, max_amount_per_group, min_amount_
         initial_recipients = group_data.iloc[:num_recipients].copy()
 
         if not initial_recipients.empty:
+            # Identify the last included KÖDI value
             last_included_KODI = initial_recipients['KÖDI'].iloc[-1]
-            additional_recipients = group_data[group_data['KÖDI'] == last_included_KODI]
-            all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates()
+            # Select all additional students who have the same KÖDI value as the last included
+            additional_recipients = group_data[
+                (group_data['KÖDI'] == last_included_KODI) & (group_data.index >= num_recipients)]
+            # Combine initial and additional recipients, keeping all of them
+            all_recipients_group = pd.concat([initial_recipients, additional_recipients]).drop_duplicates(
+                subset=['Neptun kód'])
+
+            # Update the actual number of recipients based on the full list after considering additional recipients
             num_recipients_actual = len(all_recipients_group)
 
+            # Update the total number of recipients
             total_recipients += num_recipients_actual
-            min_kodi_student = group_data[group_data['KÖDI'] == last_included_KODI].iloc[-1]
-            group_min_kodi_dict[group] = last_included_KODI
-            group_min_index_dict[group] = min_kodi_student['Ösztöndíjindex']
 
-            all_recipients_group['Group Minimum Ösztöndíjindex'] = min_kodi_student['Ösztöndíjindex']
+            # Store the minimum KÖDI and corresponding Ösztöndíjindex for each group
+            group_min_kodi_dict[group] = last_included_KODI
+            group_min_index_dict[group] = all_recipients_group['Ösztöndíjindex'].min()
+
+            # Add Group Minimum Ösztöndíjindex information to recipients group
+            all_recipients_group['Group Minimum Ösztöndíjindex'] = all_recipients_group['Ösztöndíjindex'].min()
             recipients_list.append(all_recipients_group)
         else:
             group_min_kodi_dict[group] = np.nan
