@@ -150,7 +150,6 @@ def main():
     st.set_page_config(page_title="Step 2")
     st.title("Scholarship Distribution Calculator")
 
-    sidebar1, sidebar2 = st.columns([1, 1])
     st.subheader("Upload Input File")
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx")
 
@@ -185,7 +184,7 @@ def main():
     if 'group_percentages' not in st.session_state:
         st.session_state.group_percentages = {group: 30 for group in groups}
 
-    total_fund = sidebar1.number_input("Total Scholarship Fund", value=100000000, step=1000)
+    total_fund = st.sidebar.number_input("Total Scholarship Fund", value=100000000, step=1000)
     formatted_total_fund = format_number_with_spaces(total_fund)
     st.sidebar.write(f"Formatted Total Fund: {formatted_total_fund}")
     max_amount_per_group = st.sidebar.number_input("Maximum Scholarship Amount per Student", value=100000, step=100)
@@ -246,7 +245,7 @@ def main():
 
     submitted_data_kerveny_num = len(submitted_data_kerveny)
     kerveny_percentage = (submitted_data_kerveny_num / total_students) * 100
-    sidebar2.write(f"**Total Percentage of Students Receiving Scholarships:** {total_percentage_students:.2f}%")
+    st.write(f"**Total Percentage of Students Receiving Scholarships:** {total_percentage_students:.2f}%")
     st.write(f"Total Number of students who submitted request: **{submitted_data_kerveny_num}** out of **{total_students}**. Percentage: **{kerveny_percentage:.2f}**%")
 
     st.subheader("KÖDI vs. Scholarship Amount")
