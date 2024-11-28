@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+###Copyright 2024, Bercel Kovalik-Deák, All rights reserved
 
 @st.cache_data
 def load_data(file_path):

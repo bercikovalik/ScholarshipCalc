@@ -3,7 +3,7 @@ from openpyxl.styles import PatternFill
 import streamlit as st
 import io
 
-
+###Copyright 2024, Bercel Kovalik-Deák, All rights reserved
 @st.cache_data
 def load_data(file_path):
     return pd.read_excel(file_path)

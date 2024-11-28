@@ -4,6 +4,7 @@ from io import BytesIO
 from openpyxl.styles import PatternFill
 from pygments.unistring import combine
 
+###Copyright 2024, Bercel Kovalik-Deák, All rights reserved
 
 def main():
     st.title("Final Step: Merge Scholarship Data with All Students")
