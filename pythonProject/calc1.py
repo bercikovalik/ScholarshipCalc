@@ -8,8 +8,19 @@ def load_data(file_path):
     data = pd.read_excel(file_path)
     return data
 
+
 def get_group_percentages(groups):
     st.sidebar.header("Group Percentages")
+
+    # Initialize group_percentages in session state if it doesn't exist or if it's missing groups
+    if 'group_percentages' not in st.session_state:
+        st.session_state.group_percentages = {group: 30 for group in groups}
+    else:
+        # Ensure every group in `groups` has an entry in `group_percentages`
+        for group in groups:
+            if group not in st.session_state.group_percentages:
+                st.session_state.group_percentages[group] = 30
+
     group_percentages = st.session_state.group_percentages
 
     with st.sidebar.expander("Set Group Percentages", expanded=True):
@@ -27,6 +38,7 @@ def get_group_percentages(groups):
                     group_percentages[group] = new_value
                 st.rerun()
 
+        # Add number input for each group
         for group in groups:
             percentage = st.number_input(
                 f"Group {group} Percentage (%)",
@@ -40,7 +52,6 @@ def get_group_percentages(groups):
 
     group_percentages_decimal = {group: pct / 100 for group, pct in group_percentages.items()}
     return group_percentages_decimal
-
 
 def calculate_scholarship_amounts_global(submitted_data, all_data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0):
     global all_recipients
@@ -171,9 +182,16 @@ def main():
             st.error(f"Error: Column '{col}' not found in data.")
             return
 
-    submitted_data_all = data.copy()
-    submitted_data_kerveny = data[
-        data['Hallgató kérvény azonosító'].notnull() & (data['Hallgató kérvény azonosító'] != '')].copy()
+    ###DEBUG
+    st.write(f"Debug: Data type of 'Exceed Limit' column: {data['Exceed Limit'].dtype}")
+    st.write("Debug: Unique values in 'Exceed Limit' column:", data['Exceed Limit'].unique())
+    ###DEBUG END
+
+    submitted_data_all = data[data['Exceed Limit'] == False].copy()
+    submitted_data_over = data[data['Exceed Limit'] == True].copy()
+    submitted_data_kerveny = submitted_data_all[
+        submitted_data_all['Hallgató kérvény azonosító'].notnull() & (submitted_data_all['Hallgató kérvény azonosító'] != '')].copy()
+
 
     submitted_data_all['GroupIndex'] = submitted_data_all['GroupIndex'].astype(int)
     submitted_data_kerveny['GroupIndex'] = submitted_data_kerveny['GroupIndex'].astype(int)
@@ -221,6 +239,10 @@ def main():
     )
     all_students_data['Scholarship Amount'] = all_students_data['Scholarship Amount'].fillna('')
     all_students_data['Group Minimum Ösztöndíjindex'] = all_students_data['Group Minimum Ösztöndíjindex'].fillna('')
+
+    all_students_data['Exceeded Semester Limit'] = all_students_data['Neptun kód'].isin(
+        submitted_data_over['Neptun kód'])
+    all_students_data['Scholarship Amount'] = all_students_data['Scholarship Amount'].fillna('Not Eligible')
 
     st.header("Results")
     if st.button("Export All Students to Excel"):
