@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-
+from openpyxl.styles import PatternFill
 from pygments.unistring import combine
 
 
@@ -155,9 +155,10 @@ def process_files(scholarship_df, original_df):
     combined_df.insert(negy_havi_osztondij_idx, '4 havi Ösztöndíj', combined_df['Scholarship Amount'] * 5)
 
     combined_df = combined_df.rename(columns={'Scholarship Amount' : '1 havi Ösztöndíj'})
-
+    combined_df.insert(0, 'ID', range(1, len(combined_df) + 1))
     st.subheader("Combined Data")
     st.write(combined_df)
+
 
     download_combined_df(combined_df)
 
@@ -165,7 +166,33 @@ def download_combined_df(combined_df):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         combined_df.to_excel(writer, index=False, sheet_name='Combined_Data')
+        workbook = writer.book
+        worksheet = writer.sheets['Combined_Data']
 
+        last_row = combined_df.shape[0]
+        last_col = combined_df.shape[1]
+
+        yellow_fill = workbook.add_format({'bg_color': '#FFFF00'})
+        group_fill_1 = workbook.add_format({'bg_color': '#D3D3D3'})
+        group_fill_2 = workbook.add_format({'bg_color': '#FFFFFF'})
+
+        col_idx = combined_df.columns.get_loc('1 havi Ösztöndíj')
+        worksheet.conditional_format(1, col_idx, last_row, col_idx, {'type': 'no_blanks', 'format': yellow_fill})
+
+        combined_df['TempGroupID'] = combined_df[['GroupIndex']].apply(lambda x: ' | '.join(x.astype(str)), axis=1)
+        previous_group = None
+        current_fill = group_fill_1
+
+        for row in range(1, last_row + 1):
+            group_id = combined_df.iloc[row - 1]['TempGroupID']
+
+            if group_id != previous_group:
+                current_fill = group_fill_1 if current_fill == group_fill_2 else group_fill_2
+                previous_group = group_id
+
+            worksheet.set_row(row, None, current_fill)
+
+        combined_df.drop(columns=['TempGroupID'], inplace=True)
     output.seek(0)
 
     st.download_button(
