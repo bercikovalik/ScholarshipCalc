@@ -1,5 +1,6 @@
 # University scholarship calculation tool
 
+Copyright 2024, Bercel Kovalik-Deák, All rights reserved
 The tools can be accessed through this landing page: https://mainmenu.streamlit.app
 
 // To test the application, download the Sample_Data.xlsx. For protection of personal information, this is the same structure used in the original excels, just with AI generated data, and only 500 rows instead of 7000+. //
