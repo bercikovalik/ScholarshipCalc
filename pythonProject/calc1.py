@@ -182,10 +182,6 @@ def main():
         if col not in data.columns:
             st.error(f"Error: Column '{col}' not found in data.")
             return
-    ###DEBUG
-    st.write(f"Debug: Data type of 'Exceed Limit' column: {data['Exceed Limit'].dtype}")
-    st.write("Debug: Unique values in 'Exceed Limit' column:", data['Exceed Limit'].unique())
-    ###DEBUG END
 
     submitted_data_all = data[data['Exceed Limit'] == False].copy()
     submitted_data_over = data[data['Exceed Limit'] == True].copy()
