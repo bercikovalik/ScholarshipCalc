@@ -88,7 +88,7 @@ def process_files(scholarship_df, original_df):
                                                                errors='coerce')
 
     conditions_met = (combined_df['Ösztöndíj átlag előző félév'] >= 3.8) & (
-                combined_df['ElőzőFélévTeljesítettKredit'] >= 23)
+                combined_df['ElőzőFélévTeljesítettKredit'] >= 23 & combined_df['Exceed Limit'] == False)
 
     scholarship_amount_idx = combined_df.columns.get_loc('Scholarship Amount')
 
@@ -101,6 +101,8 @@ def process_files(scholarship_df, original_df):
             return 'Ösztöndíjra jogosult'
         else:
             reasons = []
+            if row['Exceed Limit'] == True:
+                reasons.append('Túllépte a jogosultsági időszakot')
             if row['Ösztöndíj átlag előző félév'] < 3.8:
                 reasons.append('Nem érte el a minimum átlagot')
             if row['ElőzőFélévTeljesítettKredit'] < 23:
@@ -129,9 +131,11 @@ def process_files(scholarship_df, original_df):
 
     def determine_osztondij_indoklas(row):
         if pd.isna(row['Hallgató kérvény azonosító']):
-            return 'Nem pályázott'
+            return 'Túllépte a jogosultsági időszakot'
         elif row['Ösztöndíj döntés'] == 'Jogosult':
             return 'Jogosult'
+        elif row['Exceed Limit'] == True:
+            return ''
         elif row['Ösztöndíj átlag előző félév'] < 3.8:
             return 'Nem érte el a minimum átlagot'
         elif row['ElőzőFélévTeljesítettKredit'] < 23:
