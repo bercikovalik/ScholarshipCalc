@@ -131,10 +131,10 @@ def process_files(scholarship_df, original_df):
 
     def determine_osztondij_indoklas(row):
         if pd.isna(row['Hallgató kérvény azonosító']):
-            return ''
+            return ' '
         elif row['Ösztöndíj döntés'] == 'Jogosult':
             return 'Jogosult'
-        elif row['Exceed Limit'] == True:
+        elif row['Exceed Limit']:
             return 'Túllépte a jogosultsági időszakot'
         elif row['Ösztöndíj átlag előző félév'] < 3.8:
             return 'Nem érte el a minimum átlagot'
