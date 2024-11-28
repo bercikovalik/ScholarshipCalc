@@ -231,17 +231,37 @@ def main():
     difference = total_allocated - total_fund
     formatted_difference = format_number_with_spaces(abs(difference))
 
+
+    header = st.container()
+
+    header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
     if total_allocated <= total_fund:
-        st.markdown(
+        header.markdown(
             f"<span style='color: green;'>**Total Allocated Funds:** {formatted_total_allocated} (Under by {formatted_difference})</span>",
             unsafe_allow_html=True
         )
     else:
-        st.markdown(
+        header.markdown(
             f"<span style='color: red;'>**Total Allocated Funds:** {formatted_total_allocated} (Over by {formatted_difference})</span>",
             unsafe_allow_html=True
         )
-
+    ### Custom CSS for the sticky header
+    st.markdown(
+        """
+    <style>
+        div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
+            position: sticky;
+            top: 2.875rem;
+            background-color: white;
+            z-index: 999;
+        }
+        .fixed-header {
+            border-bottom: 1px solid black;
+        }
+    </style>
+        """,
+        unsafe_allow_html=True
+    )
     submitted_data_kerveny_num = len(submitted_data_kerveny)
     kerveny_percentage = (submitted_data_kerveny_num / total_students) * 100
     st.write(f"**Total Percentage of Students Receiving Scholarships:** {total_percentage_students:.2f}%")
