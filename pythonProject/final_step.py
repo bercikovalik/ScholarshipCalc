@@ -87,8 +87,10 @@ def process_files(scholarship_df, original_df):
     combined_df['ElőzőFélévTeljesítettKredit'] = pd.to_numeric(combined_df['ElőzőFélévTeljesítettKredit'],
                                                                errors='coerce')
 
-    conditions_met = (combined_df['Ösztöndíj átlag előző félév'] >= 3.8) & (
-                combined_df['ElőzőFélévTeljesítettKredit'] >= 23 & combined_df['Exceed Limit'] == False)
+    conditions_met = (
+            (combined_df['Ösztöndíj átlag előző félév'] >= 3.8) &
+            (combined_df['ElőzőFélévTeljesítettKredit'] >= 23) &
+            (combined_df['Exceed Limit'] == False))
 
     scholarship_amount_idx = combined_df.columns.get_loc('Scholarship Amount')
 
