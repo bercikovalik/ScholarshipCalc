@@ -144,7 +144,7 @@ def process_files(scholarship_df, original_df):
         elif row['ElőzőFélévTeljesítettKredit'] < 23:
             return 'Nem érte el a minimum kreditet'
         elif row['Group Minimum Ösztöndíjindex'] > row['Ösztöndíjindex']:
-            return 'Nem érte el a csoport minimum átlagát'
+            return 'Nem érte el a csoport minimum ösztöndíjindexét'
         else:
             return 'Egyéb ok'
 

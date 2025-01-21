@@ -277,7 +277,6 @@ def main():
     st.subheader("Upload max number of semesters file")
     uploaded_file2 = st.file_uploader("Choose an Excel file", type="xlsx", key="semester_limit_file_upload")
 
-    # Itt tartok, félév check jön
 
     if uploaded_file is not None and uploaded_file2 is not None:
         data = load_data(uploaded_file)
@@ -302,7 +301,8 @@ def main():
     updated_data = calculate_scholarship_index(updated_data)
     updated_data = calculate_kodi(updated_data)
 
-    small_groups_data_combined = pd.concat([small_groups_data_initial, small_groups_data_after]).drop_duplicates().reset_index(drop=True)
+    small_groups_data_combined = (pd.concat([small_groups_data_initial, small_groups_data_after])
+                                  .drop_duplicates().reset_index(drop=True))
 
     small_groups_data_combined = calculate_scholarship_index(small_groups_data_combined)
 
