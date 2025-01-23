@@ -4,7 +4,10 @@ Copyright 2024, Bercel Kovalik-Deák, All rights reserved
 
 The tools can be accessed through this landing page: https://mainmenu.streamlit.app
 
-// To test the 2nd Step of the application, download the Sample_Data.xlsx. For protection of personal information, this is the same structure used in the original excels, just with AI generated data, and only 500 rows instead of 7000+. //
+- Main_menu.py is the landing streamlit page
+- dist2_test.py is the first step
+- calc.py is the second step
+- final_step is the third and last step
 
 This project was developed in response to recent changes in the Regulation on Student Fees and Benefits at my university, requiring a new approach to scholarship calculations. The task was to create a tool that automates the calculation of scholarship scores for students, addressing both complex grouping and redistribution logic while maintaining transparency and accuracy in the process.
 
@@ -35,18 +38,7 @@ Year groups with fewer than 10 students are redistributed to the closest adjacen
 
 -__Interactive Streamlit GUI:__ A user-friendly interface built with Streamlit allows users to visualize data through graphs, review the grouped students, and adjust parameters such as distribution amounts and group thresholds. This provides a flexible way to fine-tune the scholarship calculation and see real-time results.
 
--__Calculation of Scholarship Scores (KÖDI):__ For each group, students receive a score between 0 and 100 based on their position relative to the minimum and maximum scholarship index values in their group. The formula used is:
-
-The formula used is:
-
- _KÖDI = ((HallgÖDI - MinÖDI) / (MaxÖDI - MinÖDI)) x 100_ 
-
-Where:
-
-- HallgÖDI is the student's Ösztöndíjindex.
-- MinÖDI is the lowest Ösztöndíjindex in the group.
-- MaxÖDI is the highest Ösztöndíjindex in the group.
-- Output Structure: Generates two output files:
+-__Calculation of Scholarship Scores (KÖDI):__ For each group, students receive a score between 0 and 100 based on their position relative to the minimum and maximum scholarship index values in their group.
 
 A primary file with updated student year levels and scholarship indices, excluding students from programs with fewer than 10 students.
 A separate file containing students from small programs, preserving their original details along with their recalculated year level and Ösztöndíjindex.
@@ -65,10 +57,5 @@ The tool is designed to account for various edge cases, ensuring robust performa
 
 This solution not only simplifies the scholarship calculation process but also ensures compliance with the new regulation, creating a fairer and more accurate assessment for all students.
 
-## Technologies Used
-- Python: For data processing, logic implementation, and automation.
-- Pandas: To manage and manipulate student data efficiently.
-- Streamlit: For creating an interactive GUI that allows real-time adjustments and visualizations.
-- Excel: As the primary format for input and output files, ensuring easy integration with existing university workflows.
 
 Feel free to explore the code and adapt it to similar scholarship distribution scenarios.
