@@ -3,7 +3,10 @@ import pandas as pd
 from io import BytesIO
 from openpyxl.styles import PatternFill
 from pygments.unistring import combine
-
+"""
+Ez csak a step 2 output excelt mergeli a kiinduló excellel, illetve a neptun indokláshoz szükséges oszlopokat és 
+szövegeket adja hozzá, nincs benne nagy was ist das. :)
+"""
 ###Copyright 2024, Bercel Kovalik-Deák, All rights reserved
 
 def main():

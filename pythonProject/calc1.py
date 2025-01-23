@@ -11,13 +11,20 @@ def load_data(file_path):
 
 
 def get_group_percentages(groups):
+    """
+        Létrehozza és kezeli a csoportok ösztöndíj százalékainak beállítását az oldalsávon.
+
+        Args:
+            groups (list): A csoportok listája.
+
+        Returns:
+            dict: A csoportokhoz tartozó százalékok szótára (tizedes formában).
+    """
     st.sidebar.header("Group Percentages")
 
-    # Initialize group_percentages in session state if it doesn't exist or if it's missing groups
     if 'group_percentages' not in st.session_state:
         st.session_state.group_percentages = {group: 30 for group in groups}
     else:
-        # Ensure every group in `groups` has an entry in `group_percentages`
         for group in groups:
             if group not in st.session_state.group_percentages:
                 st.session_state.group_percentages[group] = 30
@@ -55,6 +62,21 @@ def get_group_percentages(groups):
     return group_percentages_decimal
 
 def calculate_scholarship_amounts_global(submitted_data, all_data, max_amount_per_group, min_amount_per_group, group_percentages, k, x0):
+    """
+        Kiszámolja az ösztöndíjakat globálisan, figyelembe véve a csoportszázalékokat és a KÖDI értékeket.
+
+        Args:
+            submitted_data (pd.DataFrame): A kérelmet benyújtott hallgatók adatai.
+            all_data (pd.DataFrame): Minden hallgató adata.
+            max_amount_per_group (int): A maximális ösztöndíj csoportonként.
+            min_amount_per_group (int): A minimális ösztöndíj csoportonként.
+            group_percentages (dict): A csoportokhoz tartozó százalékok.
+            k (float): A logisztikus függvény meredeksége.
+            x0 (float): A logisztikus függvény középpontja.
+
+        Returns:
+            tuple: Az ösztöndíjasok adatai, a teljes ösztöndíjasok száma, az összes hallgató száma, a csoport minimum ösztöndíjindexeinek szótára.
+        """
     global all_recipients
     recipients_list = []
     total_students = len(all_data)
@@ -123,10 +145,25 @@ def calculate_scholarship_amounts_global(submitted_data, all_data, max_amount_pe
     return all_recipients, total_recipients, total_students, group_min_index_dict
 
 def calculate_total_allocated_funds(recipients):
+    """
+        Kiszámolja a kiosztott ösztöndíjak teljes összegét.
+
+        Args:
+            recipients (pd.DataFrame): Az ösztöndíjasok adatai.
+
+        Returns:
+            float: A kiosztott ösztöndíjak teljes összege.
+    """
     total_allocated = recipients['Scholarship Amount'].sum()
     return total_allocated
 
 def visualize_distribution(recipients):
+    """
+       Megjeleníti a KÖDI és az ösztöndíj összege közötti eloszlást pontdiagramon.
+
+       Args:
+           recipients (pd.DataFrame): Az ösztöndíjasok adatai.
+    """
     plt.figure(figsize=(10, 6))
     plt.scatter(recipients['KÖDI'], recipients['Scholarship Amount'], alpha=0.7)
     plt.xlabel('KÖDI')
@@ -158,6 +195,9 @@ def format_number_with_spaces(n):
 
 
 def main():
+    """
+        A Streamlit alkalmazás fő függvénye.
+    """
     st.set_page_config(page_title="Step 2")
     st.title("Scholarship Distribution Calculator")
 
