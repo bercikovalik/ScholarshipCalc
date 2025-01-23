@@ -5,9 +5,12 @@ import io
 
 ###Copyright 2024, Bercel Kovalik-Deák, All rights reserved
 @st.cache_data
+
+### Excel betöltés
 def load_data(file_path):
     return pd.read_excel(file_path)
 
+### Megnézi van két vagy több képzést végző hallgató, ha igen akkor kiírja a Neptun kódját a hallgatónak
 def check_duplicate_neptun_codes(data):
     duplicated = data[data.duplicated(subset=['Neptun kód'], keep=False)]
     if not duplicated.empty:
@@ -17,6 +20,24 @@ def check_duplicate_neptun_codes(data):
     else:
         print("No duplicate Neptun kód found.")
 
+### Folytatása az előző functionnek, ha talált többször szereplő neptun kódot, akkor kitörli azt a sort amiben a
+### hallgatónak alacsonyabb KÖDI értéke van.
+def remove_lower_kodi_duplicates(data):
+    duplicated = data[data.duplicated(subset=['Neptun kód'], keep=False)]
+    if not duplicated.empty:
+        print("Removing lower KÖDI entries for duplicate Neptun kód:")
+        for neptun_code in duplicated['Neptun kód'].unique():
+            student_rows = data[data['Neptun kód'] == neptun_code]
+            max_kodi_index = student_rows['KÖDI'].idxmax()
+            indices_to_drop = student_rows.index.difference([max_kodi_index])
+            data = data.drop(indices_to_drop)
+            print(f"Neptun kód {neptun_code}: Kept index {max_kodi_index}, dropped indices {list(indices_to_drop)}")
+    else:
+        print("No duplicate Neptun kód found after KÖDI calculation.")
+    return data.reset_index(drop=True)
+
+### Ellenőrzi hogy van-e olyan hallgató aki túllépte a jogosultsági időszakot a képzés típusa alapján
+# 
 def highlight_exceeded_semesters(main_data, small_groups_data, semester_limits):
     main_data = pd.merge(main_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
     small_groups_data = pd.merge(small_groups_data, semester_limits, how='left', left_on='KépzésKód', right_on='Képzéskód')
@@ -249,19 +270,7 @@ def calculate_kodi(data):
 
     return data
 
-def remove_lower_kodi_duplicates(data):
-    duplicated = data[data.duplicated(subset=['Neptun kód'], keep=False)]
-    if not duplicated.empty:
-        print("Removing lower KÖDI entries for duplicate Neptun kód:")
-        for neptun_code in duplicated['Neptun kód'].unique():
-            student_rows = data[data['Neptun kód'] == neptun_code]
-            max_kodi_index = student_rows['KÖDI'].idxmax()
-            indices_to_drop = student_rows.index.difference([max_kodi_index])
-            data = data.drop(indices_to_drop)
-            print(f"Neptun kód {neptun_code}: Kept index {max_kodi_index}, dropped indices {list(indices_to_drop)}")
-    else:
-        print("No duplicate Neptun kód found after KÖDI calculation.")
-    return data.reset_index(drop=True)
+
 
 
 
