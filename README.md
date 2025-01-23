@@ -4,6 +4,11 @@ Copyright 2024, Bercel Kovalik-Deák, All rights reserved
 
 The tools can be accessed through this landing page: https://mainmenu.streamlit.app
 
+- Main_menu.py is the landing streamlit page
+- dist2_test.py is the first step
+- calc.py is the second step
+- final_step is the third and last step
+
 This project was developed in response to recent changes in the Regulation on Student Fees and Benefits at my university, requiring a new approach to scholarship calculations. The task was to create a tool that automates the calculation of scholarship scores for students, addressing both complex grouping and redistribution logic while maintaining transparency and accuracy in the process.
 
 ## Project Overview
