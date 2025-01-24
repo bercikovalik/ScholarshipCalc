@@ -4,6 +4,7 @@ from io import BytesIO
 from openpyxl.styles import PatternFill
 from pygments.unistring import combine
 """
+STEP 3
 Ez csak a step 2 output excelt mergeli a kiinduló excellel, illetve a neptun indokláshoz szükséges oszlopokat és 
 szövegeket adja hozzá, nincs benne nagy was ist das. :)
 """

@@ -3,6 +3,7 @@ from openpyxl.styles import PatternFill
 import streamlit as st
 import io
 """
+STEP 1
 Legtöbb függvényhez írtam help tag description-t hogy könnyebb legyen értelmezni
 """
 ###Copyright 2024, Bercel Kovalik-Deák, All rights reserved

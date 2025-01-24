@@ -2,8 +2,12 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import io
+import xlsxwriter
 ###Copyright 2024, Bercel Kovalik-Deák, All rights reserved
-
+"""
+STEP 2
+"""
 @st.cache_data
 def load_data(file_path):
     data = pd.read_excel(file_path)
@@ -189,7 +193,7 @@ def export_data_to_excel(data_to_export, required_columns):
                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
 def format_number_with_spaces(n):
-    s = f"{n:,.2f}"
+    s = f"{n:,}"
     s = s.replace(',', ' ')
     return s
 
@@ -198,7 +202,6 @@ def main():
     """
         A Streamlit alkalmazás fő függvénye.
     """
-    st.set_page_config(page_title="Step 2")
     st.title("Scholarship Distribution Calculator")
 
     st.subheader("Upload Input File")
@@ -303,7 +306,6 @@ def main():
             f"<span style='color: red;'>**Total Allocated Funds:** {formatted_total_allocated} (Over by {formatted_difference})</span>",
             unsafe_allow_html=True
         )
-    ### Custom CSS for the sticky header
     st.markdown(
         """
     <style>
