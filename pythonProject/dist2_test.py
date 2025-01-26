@@ -388,8 +388,6 @@ def calculate_kodi(data):
 ### Streamlit és függvények meghívása
 
 def main():
-    st.set_page_config(page_title="Step 1")
-
     st.title("Student Grouping")
     st.subheader("Upload an input file where 3,8 and 23 are filtered")
     uploaded_file = st.file_uploader("Choose an Excel file", type="xlsx", key="main_file_upload")
