@@ -388,7 +388,6 @@ def calculate_kodi(data):
 ### Streamlit és függvények meghívása
 
 def main():
-
     st.set_page_config(page_title="Step 1")
 
     st.title("Student Grouping")
