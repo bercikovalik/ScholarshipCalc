@@ -212,7 +212,7 @@ def main():
     else:
         st.stop()
 
-    display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév',
+    display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév', 'Ösztöndíjindex'
                                            'KÖDI', 'Scholarship Amount']
 
     required_columns = ['GroupIndex', 'KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név',
@@ -229,7 +229,7 @@ def main():
     submitted_data_all = data[data['Exceed Limit'] == False].copy()
     submitted_data_over = data[data['Exceed Limit'] == True].copy()
     submitted_data_kerveny = submitted_data_all[
-        submitted_data_all['Hallgató kérvény azonosító'].notnull()].copy()
+        submitted_data_all['Hallgató kérvény azonosító'].notnull() & (submitted_data_all['Hallgató kérvény azonosító'] != '')].copy()
 
 
     submitted_data_all['GroupIndex'] = submitted_data_all['GroupIndex'].astype(int)

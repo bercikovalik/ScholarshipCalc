@@ -9,6 +9,29 @@ Ez csak a step 2 output excelt mergeli a kiinduló excellel, illetve a neptun in
 szövegeket adja hozzá, nincs benne nagy was ist das. :)
 """
 ###Copyright 2024, Bercel Kovalik-Deák, All rights reserved
+def calculate_summary(combined_df):
+    """Calculates the average scholarship summary.
+
+    Args:
+        combined_df: The DataFrame from the original processing.
+
+    Returns:
+        A DataFrame representing the summary table, or None on error.
+    """
+    if 'Ösztöndíjindex' not in combined_df.columns or \
+       'KépzésNév' not in combined_df.columns or \
+       '1 havi Ösztöndíj' not in combined_df.columns:
+        st.error("Error: Required columns ('Ösztöndíjindex', 'KépzésNév', '1 havi Ösztöndíj') are missing for summary calculation.")
+        return None
+
+    combined_df['Rounded Ösztöndíjindex'] = combined_df['Ösztöndíjindex'].round(2)
+    summary_df = combined_df.groupby(['Rounded Ösztöndíjindex', 'KépzésNév'])['1 havi Ösztöndíj'].mean().reset_index()
+
+    pivot_df = summary_df.pivot_table(index='Rounded Ösztöndíjindex', columns='KépzésNév', values='1 havi Ösztöndíj', fill_value=0)
+
+    pivot_df['Average of Courses'] = pivot_df.apply(lambda row: row[row != 0].mean(), axis=1)
+
+    return pivot_df
 
 def main():
     st.title("Final Step: Merge Scholarship Data with All Students")
@@ -19,10 +42,19 @@ def main():
 
     if scholarship_file is not None and original_file is not None:
         scholarship_df = pd.read_excel(scholarship_file)
-
         original_df = pd.read_excel(original_file)
+        combined_df = process_files(scholarship_df, original_df)
 
-        process_files(scholarship_df, original_df)
+        if combined_df is not None:
+            st.subheader("Combined Data")
+            st.write(combined_df)
+            download_combined_df(combined_df)
+
+            summary_df = calculate_summary(combined_df.copy())
+            if summary_df is not None:
+                st.subheader("Scholarship Summary")
+                st.write(summary_df)
+                download_summary_df(summary_df)
     else:
         st.info("Please upload both files to proceed.")
 
@@ -31,7 +63,7 @@ def process_files(scholarship_df, original_df):
 
     if 'Neptun kód' not in scholarship_df.columns or 'Neptun kód' not in original_df.columns:
         st.error("Error: 'Neptun kód' column is missing in one of the files.")
-        return
+        return None
 
     columns_to_keep = scholarship_df.columns.tolist()
 
@@ -161,11 +193,7 @@ def process_files(scholarship_df, original_df):
 
     combined_df = combined_df.rename(columns={'Scholarship Amount' : '1 havi Ösztöndíj'})
     combined_df.insert(0, 'ID', range(1, len(combined_df) + 1))
-    st.subheader("Combined Data")
-    st.write(combined_df)
-
-
-    download_combined_df(combined_df)
+    return combined_df
 
 def download_combined_df(combined_df):
     output = BytesIO()
@@ -207,6 +235,19 @@ def download_combined_df(combined_df):
         mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
 
+def download_summary_df(summary_df):
+    """Downloads the summary DataFrame as an Excel file."""
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        summary_df.to_excel(writer, sheet_name='Summary_Data', index=True)
+    output.seek(0)
+
+    st.download_button(
+        label='Download Summary Excel File',
+        data=output.getvalue(),
+        file_name='Scholarship_Summary.xlsx',
+        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 if __name__ == "__main__":
     main()
