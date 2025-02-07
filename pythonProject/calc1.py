@@ -229,7 +229,7 @@ def main():
     submitted_data_all = data[data['Exceed Limit'] == False].copy()
     submitted_data_over = data[data['Exceed Limit'] == True].copy()
     submitted_data_kerveny = submitted_data_all[
-        submitted_data_all['Hallgató kérvény azonosító'].notnull() & (submitted_data_all['Hallgató kérvény azonosító'] != '')].copy()
+        submitted_data_all['Hallgató kérvény azonosító'].notnull()].copy()
 
 
     submitted_data_all['GroupIndex'] = submitted_data_all['GroupIndex'].astype(int)
@@ -323,7 +323,7 @@ def main():
     )
     submitted_data_kerveny_num = len(submitted_data_kerveny)
     kerveny_percentage = (submitted_data_kerveny_num / total_students) * 100
-    st.write(f"**Total Number of Students Receiving Scholarships:** {total_recipients_estimated:}%")
+    st.write(f"**Total Number of Students Receiving Scholarships:** {total_recipients_estimated:}")
     st.write(f"Total Number of students who submitted request: **{submitted_data_kerveny_num}** out of **{total_students}**. Percentage: **{kerveny_percentage:.2f}**%")
 
     st.subheader("KÖDI vs. Scholarship Amount")
