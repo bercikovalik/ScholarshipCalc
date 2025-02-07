@@ -255,7 +255,6 @@ def main():
         group_percentage = group_percentages.get(group, 0.3)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group_all))
         total_recipients_estimated += num_recipients
-    total_percentage_students = (total_recipients_estimated / total_students) * 100
 
     st.subheader("Adjust Logistic Function Parameters")
     k = st.number_input("Parameter k (steepness of the curve)", min_value=0.1, max_value=50.0, value=10.0, step=0.1)
@@ -324,7 +323,7 @@ def main():
     )
     submitted_data_kerveny_num = len(submitted_data_kerveny)
     kerveny_percentage = (submitted_data_kerveny_num / total_students) * 100
-    st.write(f"**Total Percentage of Students Receiving Scholarships:** {total_percentage_students:.2f}%")
+    st.write(f"**Total Number of Students Receiving Scholarships:** {total_recipients_estimated:}%")
     st.write(f"Total Number of students who submitted request: **{submitted_data_kerveny_num}** out of **{total_students}**. Percentage: **{kerveny_percentage:.2f}**%")
 
     st.subheader("KÖDI vs. Scholarship Amount")
