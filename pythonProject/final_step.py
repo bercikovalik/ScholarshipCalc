@@ -24,11 +24,15 @@ def calculate_summary(combined_df):
         st.error("Error: Required columns ('Ösztöndíjindex', 'KépzésNév', '1 havi Ösztöndíj') are missing for summary calculation.")
         return None
 
+    combined_df['CombinedKey'] = combined_df['KépzésNév'].astype(str) + ", " + \
+                                 combined_df['Nyelv ID'].astype(str) + ", " + \
+                                 combined_df['Képzési szint_x'].astype(str)
+
     combined_df['Rounded Ösztöndíjindex'] = combined_df['Ösztöndíjindex'].round(2)
-    summary_df = combined_df.groupby(['Rounded Ösztöndíjindex', 'KépzésNév'])['1 havi Ösztöndíj'].mean().reset_index()
+    summary_df = combined_df.groupby(['Rounded Ösztöndíjindex', 'CombinedKey'])['1 havi Ösztöndíj'].mean().reset_index()
 
-    pivot_df = summary_df.pivot_table(index='Rounded Ösztöndíjindex', columns='KépzésNév', values='1 havi Ösztöndíj', fill_value=0)
-
+    pivot_df = summary_df.pivot_table(index='Rounded Ösztöndíjindex', columns='CombinedKey', values='1 havi Ösztöndíj',
+                                      fill_value=0)
     pivot_df['Average of Courses'] = pivot_df.apply(lambda row: row[row != 0].mean(), axis=1)
 
     return pivot_df
@@ -101,7 +105,12 @@ def process_files(scholarship_df, original_df):
 
     if 'GroupIndex' not in combined_df.columns:
         st.error("Error: 'GroupIndex' column is missing in the data.")
-        return
+        return None
+    if 'KépzésNév' not in combined_df.columns or \
+            'Nyelv ID' not in combined_df.columns or \
+            'Képzési szint_x' not in combined_df.columns:
+        st.error("Error: Required columns ('KépzésNév', 'Nyelv ID', 'Képzési szint_x') are missing in the data.")
+        return None
 
     group_min_osztondijindex = scholarship_df[['GroupIndex', 'Group Minimum Ösztöndíjindex']].drop_duplicates()
     group_min_osztondijindex = group_min_osztondijindex.dropna(subset=['Group Minimum Ösztöndíjindex'])
