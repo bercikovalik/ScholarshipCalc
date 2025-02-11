@@ -1,5 +1,4 @@
 import streamlit as st
-###Copyright 2024, Bercel Kovalik-Deák, All rights reserved
 
 def main():
     st.set_page_config(page_title="Main menu")

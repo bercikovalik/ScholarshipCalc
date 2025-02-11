@@ -4,10 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import io
 import xlsxwriter
-###Copyright 2024, Bercel Kovalik-Deák, All rights reserved
-"""
-STEP 2
-"""
+
 @st.cache_data
 def load_data(file_path):
     data = pd.read_excel(file_path)
