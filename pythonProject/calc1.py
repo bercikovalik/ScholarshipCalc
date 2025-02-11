@@ -209,7 +209,7 @@ def main():
     else:
         st.stop()
 
-    display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév', 'Ösztöndíjindex'
+    display_columns = ['KépzésNév','Neptun kód','Ösztöndíj átlag előző félév', 'Ösztöndíjindex',
                                            'KÖDI', 'Scholarship Amount']
 
     required_columns = ['GroupIndex', 'KépzésKód', 'KépzésNév', 'Neptun kód', 'Nyomtatási név',
