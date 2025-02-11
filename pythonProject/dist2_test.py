@@ -264,7 +264,7 @@ def recalculate_year_for_small_groups(data):
     labels = ['1. éves', '2. éves', '3. éves', '4. éves', '5. éves', '6. éves']
     data['Évfolyam'] = pd.cut(data['Aktív félévek'], bins=bins, labels=labels, right=True)
     return data
-# Magától értetődő
+# Excel mentése
 def save_to_excel(main_data, separate_data):
     main_buffer = io.BytesIO()
     with pd.ExcelWriter(main_buffer, engine='openpyxl') as writer:
