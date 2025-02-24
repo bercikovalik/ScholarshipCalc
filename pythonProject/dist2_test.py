@@ -364,7 +364,7 @@ def calculate_kodi(data):
             return 100.0
         else:
             kodi = ((row['Ösztöndíjindex'] - row['MinÖDI']) / (row['MaxÖDI'] - row['MinÖDI'])) * 100
-            return round(kodi, 6)
+            return round(kodi, 0)
 
     data['KÖDI'] = data.apply(calculate_group_kodi, axis=1)
 
