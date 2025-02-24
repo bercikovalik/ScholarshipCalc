@@ -280,9 +280,6 @@ def main():
     all_students_data['Scholarship Amount'] = all_students_data['Scholarship Amount'].fillna('Not Eligible')
 
     st.header("Results")
-    if st.button("Export All Students to Excel"):
-        export_data_to_excel(all_students_data, required_columns)
-
 
     formatted_total_allocated = format_number_with_spaces(total_allocated)
     difference = total_allocated - total_fund
@@ -326,6 +323,9 @@ def main():
     st.subheader("KÖDI vs. Scholarship Amount")
     visualize_distribution(recipients)
 
+    if st.button("Export All Students to Excel"):
+        export_data_to_excel(all_students_data, required_columns)
+        
     st.subheader("Scholarship Recipients by Group")
     for group in groups:
         num_students_in_group_all = len(data[data['GroupIndex'] == group])
