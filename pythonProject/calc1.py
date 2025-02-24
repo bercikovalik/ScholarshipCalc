@@ -35,15 +35,15 @@ def get_group_percentages(groups):
     with st.sidebar.expander("Set Group Percentages", expanded=True):
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Add 5% to All"):
+            if st.button("Add 1% to All"):
                 for group in groups:
-                    new_value = min(group_percentages[group] + 5, 100)
+                    new_value = min(group_percentages[group] + 1, 100)
                     group_percentages[group] = new_value
                 st.rerun()
         with col2:
-            if st.button("Subtract 5% from All"):
+            if st.button("Subtract 1% from All"):
                 for group in groups:
-                    new_value = max(group_percentages[group] - 5, 0)
+                    new_value = max(group_percentages[group] - 1, 0)
                     group_percentages[group] = new_value
                 st.rerun()
 
