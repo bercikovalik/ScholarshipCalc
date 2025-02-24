@@ -90,7 +90,7 @@ def calculate_scholarship_amounts_global(submitted_data, all_data, max_amount_pe
         group_submitted_data = submitted_data[submitted_data['GroupIndex'] == group].copy()
 
         num_students_in_group = len(all_group_data)
-        group_percentage = group_percentages.get(group, 0.3)
+        group_percentage = group_percentages.get(group, 0.25)
 
         num_recipients = int(np.ceil(group_percentage * num_students_in_group))
 
@@ -249,7 +249,7 @@ def main():
     total_recipients_estimated = 0
     for group in groups:
         num_students_in_group_all = len(submitted_data_all[submitted_data_all['GroupIndex'] == group])
-        group_percentage = group_percentages.get(group, 0.3)
+        group_percentage = group_percentages.get(group, 0.25)
         num_recipients = int(np.ceil(group_percentage * num_students_in_group_all))
         total_recipients_estimated += num_recipients
 
@@ -320,7 +320,7 @@ def main():
     )
     submitted_data_kerveny_num = len(submitted_data_kerveny)
     kerveny_percentage = (submitted_data_kerveny_num / total_students) * 100
-    st.write(f"**Total Number of Students Receiving Scholarships:** {total_recipients_estimated:}")
+    st.write(f"**Total Number of Students Receiving Scholarships:** {total_recipients:}")
     st.write(f"Total Number of students who submitted request: **{submitted_data_kerveny_num}** out of **{total_students}**. Percentage: **{kerveny_percentage:.2f}**%")
 
     st.subheader("KÖDI vs. Scholarship Amount")
