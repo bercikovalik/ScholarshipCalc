@@ -361,18 +361,18 @@ def calculate_kodi(data):
 
     def calculate_group_kodi(row):
         if row['MaxÖDI'] == row['MinÖDI']:
-            return 100.0
+            return 100
         else:
             kodi = ((row['Ösztöndíjindex'] - row['MinÖDI']) / (row['MaxÖDI'] - row['MinÖDI'])) * 100
-            return round(kodi, 0)
+            return round(kodi)
 
     data['KÖDI'] = data.apply(calculate_group_kodi, axis=1)
 
     max_odi_mask = data['Ösztöndíjindex'] == data['MaxÖDI']
-    data.loc[max_odi_mask, 'KÖDI'] = 100.0
+    data.loc[max_odi_mask, 'KÖDI'] = 100
 
     min_odi_mask = data['Ösztöndíjindex'] == data['MinÖDI']
-    data.loc[min_odi_mask, 'KÖDI'] = 0.0
+    data.loc[min_odi_mask, 'KÖDI'] = 0
 
     data.drop(columns=['MinÖDI', 'MaxÖDI'], inplace=True)
 
