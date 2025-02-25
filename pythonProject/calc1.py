@@ -323,8 +323,8 @@ def main():
     st.subheader("KÖDI vs. Scholarship Amount")
     visualize_distribution(recipients)
 
-    if st.button("Export All Students to Excel"):
-        export_data_to_excel(all_students_data, required_columns)
+    st.subheader("Ready to Export table")
+    st.dataframe(all_students_data)
 
     st.subheader("Scholarship Recipients by Group")
     for group in groups:
@@ -338,8 +338,7 @@ def main():
                 f"### Group {group} (Total Students: {num_students_in_group_all}, Recipients: {num_recipients_in_group}, Actual percentage: {actual_percentage:.2f}%)")
             st.dataframe(group_recipients[display_columns])
 
-    st.subheader("Ready to Export table")
-    st.dataframe(all_students_data)
+
 if __name__ == "__main__":
     main()
 
