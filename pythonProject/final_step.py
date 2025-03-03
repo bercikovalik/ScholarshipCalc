@@ -177,15 +177,17 @@ def process_files(scholarship_df, original_df):
         if pd.isna(row['Hallgató kérvény azonosító']):
             return ' '
         elif row['Ösztöndíj döntés'] == 'Jogosult':
-            return 'Jogosult'
+            return ('Ösztöndíjt kap')
         elif row['Exceed Limit']:
             return 'Túllépte a jogosultsági időszakot'
+        elif row['Ösztöndíj átlag előző félév'] < 3.8 and row['ElőzőFélévTeljesítettKredit'] < 23:
+            return("Nem érte el a szükséges átlagot és kreditet")
         elif row['Ösztöndíj átlag előző félév'] < 3.8:
-            return 'Nem érte el a minimum átlagot'
+            return ('Nem érte el a szükséges átlagot')
         elif row['ElőzőFélévTeljesítettKredit'] < 23:
-            return 'Nem érte el a minimum kreditet'
+            return ('Nem érte el a szükséges kreditet')
         elif row['Group Minimum Ösztöndíjindex'] > row['Ösztöndíjindex']:
-            return 'Nem érte el a csoport minimum ösztöndíjindexét'
+            return ('Nem érte el a csoportja minimum ösztöndíjindexét')
         else:
             return 'Egyéb ok'
 
