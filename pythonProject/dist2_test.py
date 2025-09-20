@@ -106,8 +106,8 @@ def group_students(data):
     Returns:
         tuple: A csoportosított adatokat és az eredeti adatokat tartalmazó tuple.
     """
-    bins = [0, 2, 4, 6, 8, 10, 12]
-    labels = ['1. éves', '2. éves', '3. éves', '4. éves', '5. éves', '6. éves']
+    bins = [0, 2, 4, 6, 8, 10, 12, 14]
+    labels = ['1. éves', '2. éves', '3. éves', '4. éves', '5. éves', '6. éves', '7. éves']
     data['Évfolyam'] = pd.cut(data['Aktív félévek'], bins=bins, labels=labels, right=True)
 
     grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
@@ -249,6 +249,9 @@ def calculate_scholarship_index(data):
         """
     data['Kredit szám'] = data['ElőzőFélévTeljesítettKredit'].apply(lambda x: min(x, 42))
     data['Ösztöndíjindex'] = data['Ösztöndíj átlag előző félév'] + ((data['Kredit szám'] / 27) - 1) / 2
+
+    nan_rows = data[data['Ösztöndíjindex'].isna()]
+    print("Rows with NaN Ösztöndíjindex:\n", nan_rows)
     return data
 # A 10 főnél kisebb szak hallgatóira újra számoljuk az évfolyamot
 def recalculate_year_for_small_groups(data):
@@ -260,8 +263,8 @@ def recalculate_year_for_small_groups(data):
         Returns:
             pd.DataFrame: A DataFrame az újraszámolt évfolyamokkal.
         """
-    bins = [0, 2, 4, 6, 8, 10, 12]
-    labels = ['1. éves', '2. éves', '3. éves', '4. éves', '5. éves', '6. éves']
+    bins = [0, 2, 4, 6, 8, 10, 12, 14]
+    labels = ['1. éves', '2. éves', '3. éves', '4. éves', '5. éves', '6. éves', '7. éves']
     data['Évfolyam'] = pd.cut(data['Aktív félévek'], bins=bins, labels=labels, right=True)
     return data
 # Excel mentése
@@ -354,6 +357,12 @@ def calculate_kodi(data):
             pd.DataFrame: A DataFrame a kiszámolt KÖDI értékekkel.
         """
     grouping_columns = ['KépzésNév', 'Képzési szint', 'Nyelv ID', 'Évfolyam']
+    print("Unique values per grouping column:")
+    for col in grouping_columns:
+        print(col, data[col].unique())
+    print("Number of rows in data:", len(data))
+    print("Rows with missing grouping keys:")
+    print(data[data[grouping_columns].isna().any(axis=1)])
     grouped = data.groupby(grouping_columns, observed=True)
 
     data['MinÖDI'] = grouped['Ösztöndíjindex'].transform('min')
