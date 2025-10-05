@@ -2,12 +2,14 @@ import os
 import sys
 import subprocess
 
-def run():
-    # Path to your main app
-    script = os.path.join(os.path.dirname(__file__), "Main_menu.py")
-
-    # Run: streamlit run app.py
-    subprocess.Popen([sys.executable, "-m", "streamlit", "run", script])
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 if __name__ == "__main__":
-    run()
+    main_path = resource_path("Main_menu.py")
+    os.chdir(os.path.dirname(main_path))
+    subprocess.run(["streamlit", "run", main_path])
